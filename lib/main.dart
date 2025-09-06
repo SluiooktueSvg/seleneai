@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, // Hiding the debug banner
       title: 'Selene',
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF0C0C0C),
@@ -182,86 +183,88 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.square_outlined, color: Colors.white),
-          onPressed: () {},
-        ),
-        title: Row(
-          children: [
-            const Icon(Icons.nights_stay_outlined, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text('Selene', style: TextStyle(color: Colors.white)),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(30.0),
+        titleSpacing: 0,
+        title: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.square_outlined, color: Colors.white),
+                onPressed: () {},
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min, // Constrain row to minimum size
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, size: 20),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.graphic_eq, size: 20),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.file_copy_outlined, size: 20),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.folder_outlined, size: 20),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    onPressed: () {},
-                    color: Colors.redAccent,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward, size: 20),
-                    onPressed: () async {
-                      await _googleSignIn.signOut();
-                      await FirebaseAuth.instance.signOut();
-                    },
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
+              const SizedBox(width: 8),
+              const Icon(Icons.nights_stay_outlined, color: Colors.white),
+              const SizedBox(width: 8),
+              const Text('Selene', style: TextStyle(color: Colors.white)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min, // Constrain row to minimum size
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.camera_alt_outlined, size: 20),
+                      onPressed: () {},
+                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.graphic_eq, size: 20),
+                      onPressed: () {},
+                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.file_copy_outlined, size: 20),
+                      onPressed: () {},
+                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.folder_outlined, size: 20),
+                      onPressed: () {},
+                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20),
+                      onPressed: () {},
+                      color: Colors.redAccent,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_forward, size: 20),
+                      onPressed: () async {
+                        await _googleSignIn.signOut();
+                        await FirebaseAuth.instance.signOut();
+                      },
+                      color: Colors.white,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          )
-        ],
+            ],
+          ),
+        ),
       ),
       body: Column(
         children: [
