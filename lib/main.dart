@@ -358,7 +358,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     reverse: true,
-                    itemCount: _messages.length + (_isTorniaping ? 1 : 0),
+                    itemCount: _messages.length + (_isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (_isTyping && index == 0) {
                         return _ChatMessageBubble(
