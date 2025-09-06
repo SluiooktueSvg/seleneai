@@ -10,7 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 // IMPORTANT: Replace with your actual API key
-const String apiKey = 'AIzaSyDE6EX2yL5yJLEBNv6nZ84jK-BZwtfHidw';
+const String apiKey = 'YOUR_API_KEY';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -136,7 +136,7 @@ class ChatMessage {
   final String text;
   final bool isUser;
 
-  ChatMessage({required this.text, required this.isUser});
+  const ChatMessage({required this.text, required this.isUser});
 }
 
 class ChatScreen extends StatefulWidget {
