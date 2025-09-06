@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "485861325401",
+    "project_id": "lsaig-5o4m2",
+    "storage_bucket": "lsaig-5o4m2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485861325401:android:1c4376307a000a23e94f48",
+        "android_client_info": {
+          "package_name": "com.example.seleneai"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "485861325401-v00vjo1qgi2vcj8q8fg24v21f2d22pvf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJ1HC_ngivZILLOd97I68wf2Kh2lDm-bE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485861325401-v00vjo1qgi2vcj8q8fg24v21f2d22pvf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "485861325401-frpmt9m84erqi1h46qol49408n6hoohc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.selene.seleneChat"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
