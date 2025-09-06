@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/intl.dart';
 
 // Create a single, top-level instance of GoogleSignIn
 final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -135,8 +136,13 @@ class SignInScreen extends StatelessWidget {
 class ChatMessage {
   final String text;
   final bool isUser;
+  final DateTime timestamp;
 
-  const ChatMessage({required this.text, required this.isUser});
+  const ChatMessage({
+    required this.text,
+    required this.isUser,
+    required this.timestamp,
+  });
 }
 
 class ChatScreen extends StatefulWidget {
@@ -191,7 +197,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Future<void> _handleSendMessage() async {
     if (_textController.text.isEmpty) return;
 
-    final userMessage = ChatMessage(text: _textController.text, isUser: true);
+    final userMessage = ChatMessage(
+      text: _textController.text,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
     _textController.clear();
 
     setState(() {
@@ -201,13 +211,21 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     try {
       final response = await _chat.sendMessage(Content.text(userMessage.text));
-      final aiMessage = ChatMessage(text: response.text ?? '...', isUser: false);
+      final aiMessage = ChatMessage(
+        text: response.text ?? '...',
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
       setState(() {
         _messages.add(aiMessage);
       });
     } catch (e) {
       print('Error sending message: $e');
-      final errorMessage = ChatMessage(text: 'Error, por favor intenta de nuevo', isUser: false);
+      final errorMessage = ChatMessage(
+        text: 'Error, por favor intenta de nuevo',
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
       setState(() {
         _messages.add(errorMessage);
       });
@@ -343,11 +361,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     itemCount: _messages.length + (_isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (_isTyping && index == 0) {
-                        return const _ChatMessageBubble(message: ChatMessage(text: '...', isUser: false));
+                        return _ChatMessageBubble(
+                          message: ChatMessage(text: '...', isUser: false, timestamp: DateTime.now()),
+                          userPhotoUrl: null,
+                        );
                       }
                       final messageIndex = _isTyping ? index -1 : index;
                       final message = _messages.reversed.toList()[messageIndex];
-                      return _ChatMessageBubble(message: message);
+                      return _ChatMessageBubble(
+                        message: message,
+                        userPhotoUrl: user?.photoURL,
+                      );
                     },
                   ),
           ),
@@ -406,25 +430,71 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 }
 
 class _ChatMessageBubble extends StatelessWidget {
-  const _ChatMessageBubble({required this.message});
+  const _ChatMessageBubble({required this.message, this.userPhotoUrl});
 
   final ChatMessage message;
+  final String? userPhotoUrl;
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-        decoration: BoxDecoration(
-          color: message.isUser ? Colors.blueAccent : const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          message.text,
-          style: const TextStyle(color: Colors.white),
-        ),
+    final timeFormat = DateFormat('h:mm a');
+    final timeString = timeFormat.format(message.timestamp);
+
+    final aiAvatar = CircleAvatar(
+      backgroundColor: Colors.blue.shade900,
+      child: const Text('AI', style: TextStyle(color: Colors.white, fontSize: 14)),
+    );
+
+    final userAvatar = CircleAvatar(
+      backgroundImage: userPhotoUrl != null ? NetworkImage(userPhotoUrl!) : null,
+      child: userPhotoUrl == null ? const Icon(Icons.person) : null,
+    );
+
+    final messageBubble = Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      decoration: BoxDecoration(
+        color: message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                timeString,
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+              if (!message.isUser)
+                ...[
+                  const SizedBox(width: 8),
+                  const Text(
+                    'positive',
+                    style: TextStyle(color: Colors.greenAccent, fontSize: 12),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+                ],
+            ],
+          ),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      child: Row(
+        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
+          messageBubble,
+          if (message.isUser) ...[const SizedBox(width: 8), userAvatar],
+        ],
       ),
     );
   }
