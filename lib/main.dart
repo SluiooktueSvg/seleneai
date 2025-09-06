@@ -10,7 +10,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 // IMPORTANT: Replace with your actual API key
-const String apiKey = 'YOUR_API_KEY';
+const String apiKey = 'AIzaSyDE6EX2yL5yJLEBNv6nZ84jK-BZwtfHidw';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
