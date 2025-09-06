@@ -178,7 +178,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    String? firstName = user?.displayName?.split(' ').first;
+    String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
 
     return Scaffold(
       appBar: AppBar(
@@ -205,6 +205,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 borderRadius: BorderRadius.circular(30.0),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min, // Constrain row to minimum size
                 children: [
                   IconButton(
                     icon: const Icon(Icons.camera_alt_outlined, size: 20),
@@ -274,10 +275,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           animation: _colorAnimation,
                           builder: (context, child) {
                             return Text(
-                              'Buenos días, ${firstName ?? 'User'}',
+                              'Buenos días, $firstName',
                               style: TextStyle(
-                                fontSize: 28, // Restored font size
-                                color: _colorAnimation.value, // Applied animated color
+                                fontSize: 28,
+                                color: _colorAnimation.value,
                               ),
                             );
                           },
@@ -329,7 +330,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
                   contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
-                  hintText: 'Cuéntame una',
+                  hintText: 'Explore',
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
                 ),
