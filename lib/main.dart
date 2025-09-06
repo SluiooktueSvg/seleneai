@@ -430,7 +430,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 }
 
-class _ChatMessageBubble extends StatelessWidget {
+class _ChatMessageBubble extends StatefulWidget {
   const _ChatMessageBubble({
     required this.message,
     this.userPhotoUrl,
@@ -442,9 +442,34 @@ class _ChatMessageBubble extends StatelessWidget {
   final bool isTyping;
 
   @override
+  State<_ChatMessageBubble> createState() => _ChatMessageBubbleState();
+}
+
+class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTickerProviderStateMixin {
+  late final AnimationController _animationController;
+  late final Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _animation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat('h:mm a');
-    final timeString = timeFormat.format(message.timestamp);
+    final timeString = timeFormat.format(widget.message.timestamp);
 
     final aiAvatar = CircleAvatar(
       backgroundColor: Colors.blue.shade900,
@@ -452,12 +477,12 @@ class _ChatMessageBubble extends StatelessWidget {
     );
 
     final userAvatar = CircleAvatar(
-      backgroundImage: userPhotoUrl != null ? NetworkImage(userPhotoUrl!) : null,
-      child: userPhotoUrl == null ? const Icon(Icons.person) : null,
+      backgroundImage: widget.userPhotoUrl != null ? NetworkImage(widget.userPhotoUrl!) : null,
+      child: widget.userPhotoUrl == null ? const Icon(Icons.person) : null,
     );
 
     Widget messageContent;
-    if (isTyping) {
+    if (widget.isTyping) {
       messageContent = _buildTypingIndicator(timeString);
     } else {
       messageContent = _buildMessageContent(timeString);
@@ -467,22 +492,30 @@ class _ChatMessageBubble extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
       decoration: BoxDecoration(
-        color: message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
+        color: widget.message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
       ),
       child: messageContent,
     );
 
-    return Padding(
+    final bubbleWithAvatars = Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Row(
-        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: widget.message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
+          if (!widget.message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
           messageBubble,
-          if (message.isUser) ...[const SizedBox(width: 8), userAvatar],
+          if (widget.message.isUser) ...[const SizedBox(width: 8), userAvatar],
         ],
+      ),
+    );
+
+    return FadeTransition(
+      opacity: _animation,
+      child: SizeTransition(
+        sizeFactor: _animation,
+        child: bubbleWithAvatars,
       ),
     );
   }
@@ -491,24 +524,26 @@ class _ChatMessageBubble extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        const SizedBox(height: 4),
+        if (widget.message.text.isNotEmpty)
+          Text(widget.message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        const SizedBox(height: 5),
         Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               timeString,
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            if (!message.isUser)
+            if (!widget.message.isUser)
               ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 10),
                 const Text(
                   'positive',
                   style: TextStyle(color: Colors.greenAccent, fontSize: 12),
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+                const SizedBox(width: 6),
+                const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
               ],
           ],
         ),
@@ -524,15 +559,16 @@ class _ChatMessageBubble extends StatelessWidget {
           'Thinking...',
           style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 5),
         Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               timeString,
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             const SizedBox(
               width: 12,
               height: 12,
@@ -541,13 +577,13 @@ class _ChatMessageBubble extends StatelessWidget {
                 color: Colors.white54,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             const Text(
               'Analyzing...',
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+            const SizedBox(width: 8),
+            const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
           ],
         ),
       ],
