@@ -20,7 +20,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Selene',
-      theme: ThemeData.dark(),
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF0C0C0C),
+        primaryColor: Colors.blueAccent,
+      ),
       home: const AuthWrapper(),
     );
   }
@@ -57,7 +60,6 @@ class SignInScreen extends StatelessWidget {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
-      // If the user cancels the sign-in, googleUser will be null
       if (googleUser == null) {
         return;
       }
@@ -124,32 +126,134 @@ class SignInScreen extends StatelessWidget {
   }
 }
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
   @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _textController = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser;
+
+  @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    String? firstName = user?.displayName?.split(' ').first;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Selene Chat'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.square_outlined, color: Colors.white),
+          onPressed: () {},
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.nights_stay_outlined, color: Colors.white),
+            const SizedBox(width: 8),
+            const Text('Selene', style: TextStyle(color: Colors.white)),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.mic_none, color: Colors.white),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.file_copy_outlined, color: Colors.white),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.folder_outlined, color: Colors.white),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward, color: Colors.white),
             onPressed: () async {
               await _googleSignIn.signOut();
               await FirebaseAuth.instance.signOut();
             },
-          )
+          ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Buenos días, ${firstName ?? 'User'}',
+                    style: const TextStyle(fontSize: 28, color: Colors.blueAccent),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '¿En qué puedo ayudarte a pensar o resolver?',
+                    style: TextStyle(fontSize: 16, color: Colors.white70),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          _buildTextComposer(),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              '© 2025 Selene. All rights reserved. Sluiooktue Inc. Luis M.',
+              style: TextStyle(fontSize: 10, color: Colors.white30),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextComposer() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(30.0),
+        ),
+        child: Row(
           children: [
-            Text('Welcome, ${user?.displayName}!'),
-            // Chat UI will go here
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
+                  hintText: 'Cuéntame una',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.mic, color: Colors.white54),
+              onPressed: () {
+                // Handle voice input
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.send, color: Colors.white54),
+              onPressed: () {
+                // Handle send message
+              },
+            ),
           ],
         ),
       ),
