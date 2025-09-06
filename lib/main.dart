@@ -362,8 +362,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     itemBuilder: (context, index) {
                       if (_isTyping && index == 0) {
                         return _ChatMessageBubble(
-                          message: ChatMessage(text: '...', isUser: false, timestamp: DateTime.now()),
+                          message: ChatMessage(text: '', isUser: false, timestamp: DateTime.now()),
                           userPhotoUrl: null,
+                          isTyping: true,
                         );
                       }
                       final messageIndex = _isTyping ? index -1 : index;
@@ -430,10 +431,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 }
 
 class _ChatMessageBubble extends StatelessWidget {
-  const _ChatMessageBubble({required this.message, this.userPhotoUrl});
+  const _ChatMessageBubble({
+    required this.message,
+    this.userPhotoUrl,
+    this.isTyping = false,
+  });
 
   final ChatMessage message;
   final String? userPhotoUrl;
+  final bool isTyping;
 
   @override
   Widget build(BuildContext context) {
@@ -450,6 +456,13 @@ class _ChatMessageBubble extends StatelessWidget {
       child: userPhotoUrl == null ? const Icon(Icons.person) : null,
     );
 
+    Widget messageContent;
+    if (isTyping) {
+      messageContent = _buildTypingIndicator(timeString);
+    } else {
+      messageContent = _buildMessageContent(timeString);
+    }
+
     final messageBubble = Container(
       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -457,32 +470,7 @@ class _ChatMessageBubble extends StatelessWidget {
         color: message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                timeString,
-                style: const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-              if (!message.isUser)
-                ...[
-                  const SizedBox(width: 8),
-                  const Text(
-                    'positive',
-                    style: TextStyle(color: Colors.greenAccent, fontSize: 12),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
-                ],
-            ],
-          ),
-        ],
-      ),
+      child: messageContent,
     );
 
     return Padding(
@@ -496,6 +484,73 @@ class _ChatMessageBubble extends StatelessWidget {
           if (message.isUser) ...[const SizedBox(width: 8), userAvatar],
         ],
       ),
+    );
+  }
+
+  Widget _buildMessageContent(String timeString) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              timeString,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            if (!message.isUser)
+              ...[
+                const SizedBox(width: 8),
+                const Text(
+                  'positive',
+                  style: TextStyle(color: Colors.greenAccent, fontSize: 12),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+              ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypingIndicator(String timeString) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Thinking...',
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              timeString,
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            const SizedBox(width: 8),
+            const SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white54,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Analyzing...',
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+          ],
+        ),
+      ],
     );
   }
 }
