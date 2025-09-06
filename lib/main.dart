@@ -132,10 +132,40 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
   bool _hasStartedChat = false;
+
+  late final AnimationController _animationController;
+  late final Animation<Color?> _colorAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+    _colorAnimation = TweenSequence<Color?>([
+      TweenSequenceItem(
+        tween: ColorTween(begin: Colors.blueAccent, end: Colors.cyanAccent),
+        weight: 1.0,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(begin: Colors.cyanAccent, end: Colors.purpleAccent),
+        weight: 1.0,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(begin: Colors.purpleAccent, end: Colors.blueAccent),
+        weight: 1.0,
+      ),
+    ]).animate(_animationController);
+    _animationController.repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _handleSendMessage() {
     if (_textController.text.isNotEmpty) {
@@ -203,8 +233,17 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Buenos días, ${firstName ?? 'User'}'
+                        AnimatedBuilder(
+                          animation: _colorAnimation,
+                          builder: (context, child) {
+                            return Text(
+                              'Buenos días, ${firstName ?? 'User'}',
+                              style: TextStyle(
+                                fontSize: 28, // Restored font size
+                                color: _colorAnimation.value, // Applied animated color
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
                         const Text(
