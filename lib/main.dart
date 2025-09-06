@@ -4,6 +4,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+// Create a single, top-level instance of GoogleSignIn
+final GoogleSignIn _googleSignIn = GoogleSignIn();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -52,17 +55,24 @@ class SignInScreen extends StatelessWidget {
 
   Future<void> _signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      final GoogleSignInAuthentication? googleAuth = await googleUser?.authentication;
-      if (googleAuth != null) {
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await FirebaseAuth.instance.signInWithCredential(credential);
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      // If the user cancels the sign-in, googleUser will be null
+      if (googleUser == null) {
+        return;
       }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      
+      await FirebaseAuth.instance.signInWithCredential(credential);
     } catch (e) {
-      print(e); // Handle error appropriately
+      print("Something went wrong with Google Sign-In");
+      print(e);
     }
   }
 
@@ -128,7 +138,7 @@ class ChatScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
-              await GoogleSignIn().signOut();
+              await _googleSignIn.signOut();
               await FirebaseAuth.instance.signOut();
             },
           )
