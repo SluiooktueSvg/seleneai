@@ -358,10 +358,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     reverse: true,
-                    itemCount: _messages.length + (_isTyping ? 1 : 0),
+                    itemCount: _messages.length + (_isTorniaping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (_isTyping && index == 0) {
                         return _ChatMessageBubble(
+                          key: const ValueKey('typing-indicator'),
                           message: ChatMessage(text: '', isUser: false, timestamp: DateTime.now()),
                           userPhotoUrl: null,
                           isTyping: true,
@@ -370,6 +371,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       final messageIndex = _isTyping ? index -1 : index;
                       final message = _messages.reversed.toList()[messageIndex];
                       return _ChatMessageBubble(
+                        key: ObjectKey(message),
                         message: message,
                         userPhotoUrl: user?.photoURL,
                       );
@@ -432,6 +434,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
 class _ChatMessageBubble extends StatefulWidget {
   const _ChatMessageBubble({
+    super.key,
     required this.message,
     this.userPhotoUrl,
     this.isTyping = false,
@@ -515,6 +518,7 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTicke
       opacity: _animation,
       child: SizeTransition(
         sizeFactor: _animation,
+        axisAlignment: 1.0, // Grow from the bottom up
         child: bubbleWithAvatars,
       ),
     );
