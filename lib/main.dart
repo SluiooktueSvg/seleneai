@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -136,6 +135,16 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
+  bool _hasStartedChat = false;
+
+  void _handleSendMessage() {
+    if (_textController.text.isNotEmpty) {
+      setState(() {
+        _hasStartedChat = true;
+      });
+      _textController.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -189,24 +198,32 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Buenos días, ${firstName ?? 'User'}',
-                    style: const TextStyle(fontSize: 28, color: Colors.blueAccent),
+            child: !_hasStartedChat
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Buenos días, ${firstName ?? 'User'}'
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          '¿En qué puedo ayudarte a pensar o resolver?',
+                          style: TextStyle(fontSize: 16, color: Colors.white70),
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextComposer(),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: 0, // Placeholder for chat messages
+                    itemBuilder: (context, index) {
+                      return const Text('Message'); // Placeholder
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '¿En qué puedo ayudarte a pensar o resolver?',
-                    style: TextStyle(fontSize: 16, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
           ),
-          _buildTextComposer(),
+          if (_hasStartedChat) _buildTextComposer(),
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: Text(
@@ -250,9 +267,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.send, color: Colors.white54),
-              onPressed: () {
-                // Handle send message
-              },
+              onPressed: _handleSendMessage, // Updated onPressed
             ),
           ],
         ),
