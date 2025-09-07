@@ -246,84 +246,70 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.square_outlined, color: Colors.white),
-          onPressed: () {},
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.nights_stay, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text('Selene', style: TextStyle(color: Colors.white, fontSize: 18)),
-          ],
-        ),
+        title: const Text('Selene', style: TextStyle(color: Colors.white, fontSize: 18)),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(30.0),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.graphic_eq, size: 18),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.file_copy_outlined, size: 18),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.folder_outlined, size: 18),
-                    onPressed: () {},
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    onPressed: () {},
-                    color: Colors.redAccent,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_forward, size: 18),
-                    onPressed: () async {
-                      await _googleSignIn.signOut();
-                      await FirebaseAuth.instance.signOut();
-                    },
-                    color: Colors.white,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ],
-              ),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ),
         ],
+      ),
+      endDrawer: Drawer(
+        child: Container(
+          color: const Color(0xFF1E1E1E),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              const DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Color(0xFF0C0C0C),
+                ),
+                child: Text(
+                  'Options',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                title: const Text('Camera', style: TextStyle(color: Colors.white)),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.graphic_eq, color: Colors.white),
+                title: const Text('Graphic Equalizer', style: TextStyle(color: Colors.white)),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
+                title: const Text('Copy File', style: TextStyle(color: Colors.white)),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.folder_outlined, color: Colors.white),
+                title: const Text('Folder', style: TextStyle(color: Colors.white)),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {},
+              ),
+              ListTile(
+                leading: const Icon(Icons.arrow_forward, color: Colors.white),
+                title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                onTap: () async {
+                  await _googleSignIn.signOut();
+                  await FirebaseAuth.instance.signOut();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
       body: Column(
         children: [
