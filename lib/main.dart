@@ -503,60 +503,38 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Widget _buildTextComposer() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Column(
-        children: [
-          if (_imageFile != null)
-            Stack(
-              children: [
-                Image.file(_imageFile!),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        _imageFile = null;
-                      });
-                    },
-                  ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(30.0),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
+                  hintText: 'Explore',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
                 ),
-              ],
+                onSubmitted: (value) => _handleSendMessage(),
+              ),
             ),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(30.0),
+            IconButton(
+              icon: const Icon(Icons.mic, color: Colors.white54),
+              onPressed: () {
+                // Handle voice input
+              },
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
-                      hintText: 'Explore',
-                      hintStyle: TextStyle(color: Colors.white54),
-                      border: InputBorder.none,
-                    ),
-                    onSubmitted: (value) => _handleSendMessage(),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.mic, color: Colors.white54),
-                  onPressed: () {
-                    // Handle voice input
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.white54),
-                  onPressed: _handleSendMessage,
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.send, color: Colors.white54),
+              onPressed: _handleSendMessage,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
