@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app uses speech recognition to convert your voice into text for the voice chat feature.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app uses the microphone to record your voice for the voice chat feature.</string>
 </dict>
 </plist>

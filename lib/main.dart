@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
+import 'package:seleneai/voice_chat_screen.dart';
 
 // Create a single, top-level instance of GoogleSignIn
 final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -290,9 +291,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onTap: () {},
               ),
               ListTile(
-                leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                title: const Text('Graphic Equalizer', style: TextStyle(color: Colors.white)),
-                onTap: () {},
+                leading: const Icon(Icons.record_voice_over, color: Colors.white),
+                title: const Text('Voice Chat', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const VoiceChatScreen()),
+                  );
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
@@ -306,8 +312,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
-                onTap: () {},
+                title: const Text('Delete Conversation', style: TextStyle(color: Colors.redAccent)),
+                onTap: () {
+                  setState(() {
+                    _messages.clear();
+                  });
+                  Navigator.of(context).pop();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.arrow_forward, color: Colors.white),
