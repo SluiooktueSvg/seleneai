@@ -300,7 +300,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             children: [
               const DrawerHeader(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0C0C0C),
+                  color: Color(0xFF0C0C0C),
                 ),
                 child: Text(
                   'Options',
@@ -313,7 +313,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
                 title: const Text('Camera', style: TextStyle(color: Colors.white)),
-                onTap: () {},'
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq, color: Colors.white),
@@ -328,12 +328,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ListTile(
                 leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
                 title: const Text('Copy File', style: TextStyle(color: Colors.white)),
-                onTap: () {},'
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.folder_outlined, color: Colors.white),
                 title: const Text('Folder', style: TextStyle(color: Colors.white)),
-                onTap: () {},'
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -379,7 +379,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
-        ),'
+        ),
       ),
       body: Column(
         children: [
@@ -634,7 +634,7 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
                 ),
                 const SizedBox(width: 6),
                 const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
-              ],'
+              ],
           ],
         ),
       ],
