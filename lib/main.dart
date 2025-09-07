@@ -270,47 +270,47 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.camera_alt_outlined, size: 20),
+                    icon: const Icon(Icons.camera_alt_outlined, size: 18),
                     onPressed: () {},
                     color: Colors.white,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.graphic_eq, size: 20),
+                    icon: const Icon(Icons.graphic_eq, size: 18),
                     onPressed: () {},
                     color: Colors.white,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.file_copy_outlined, size: 20),
+                    icon: const Icon(Icons.file_copy_outlined, size: 18),
                     onPressed: () {},
                     color: Colors.white,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.folder_outlined, size: 20),
+                    icon: const Icon(Icons.folder_outlined, size: 18),
                     onPressed: () {},
                     color: Colors.white,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20),
+                    icon: const Icon(Icons.delete_outline, size: 18),
                     onPressed: () {},
                     color: Colors.redAccent,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.arrow_forward, size: 20),
+                    icon: const Icon(Icons.arrow_forward, size: 18),
                     onPressed: () async {
                       await _googleSignIn.signOut();
                       await FirebaseAuth.instance.signOut();
@@ -382,7 +382,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: Text(
-              '© 2025 Selene. All rights reserved. Sluiooktue Inc. Luis M.',
+              '© 2025 Selene. All rights reserved. SeleneAI.',
               style: TextStyle(fontSize: 10, color: Colors.white30),
               textAlign: TextAlign.center,
             ),
