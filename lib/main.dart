@@ -119,12 +119,7 @@ class SignInScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 20),
-                  Image.asset('assets/images/google_ai_logo.png', height: 24.0),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'Google AI Studio',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  Image.asset('assets/images/google_logo.png', height: 24.0),
                 ],
               ),
             ),
@@ -195,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -285,15 +280,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
-            Image.asset('assets/images/google_ai_logo.png', height: 16.0),
-             const SizedBox(width: 8),
-            Flexible(
-              child: const Text(
-                'Google AI Studio',
-                style: TextStyle(color: Colors.white, fontSize: 14),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Image.asset('assets/images/google_logo.png', height: 16.0),
           ],
         ),
         actions: [
