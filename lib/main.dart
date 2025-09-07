@@ -271,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: animation,
-        curve: Curves.elasticOut, // More bouncy spring-like effect
+        curve: Curves.easeOutBack, // Use easeOutBack for a subtle bounce
       ),
     );
 
