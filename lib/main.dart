@@ -190,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -313,7 +313,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
                 title: const Text('Camera', style: TextStyle(color: Colors.white)),
-                onTap: () {},
+                onTap: () {},'
               ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq, color: Colors.white),
@@ -328,12 +328,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ListTile(
                 leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
                 title: const Text('Copy File', style: TextStyle(color: Colors.white)),
-                onTap: () {},
+                onTap: () {},'
               ),
               ListTile(
                 leading: const Icon(Icons.folder_outlined, color: Colors.white),
                 title: const Text('Folder', style: TextStyle(color: Colors.white)),
-                onTap: () {},
+                onTap: () {},'
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -379,7 +379,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
-        ),
+        ),'
       ),
       body: Column(
         children: [
@@ -504,9 +504,11 @@ class _ChatMessageBubble extends StatefulWidget {
   State<_ChatMessageBubble> createState() => _ChatMessageBubbleState();
 }
 
-class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTickerProviderStateMixin {
+class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProviderStateMixin {
   late final AnimationController _animationController;
   late final Animation<double> _animation;
+  late final AnimationController _breathingController;
+  late final Animation<double> _breathingAnimation;
 
   @override
   void initState() {
@@ -517,12 +519,35 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTicke
     );
     _animation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
     _animationController.forward();
+    
+    _breathingController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1500));
+    _breathingAnimation =
+        Tween<double>(begin: 1.0, end: 1.02).animate(CurvedAnimation(
+      parent: _breathingController,
+      curve: Curves.easeInOut,
+    ));
+
+    if (widget.isTyping) {
+      _breathingController.repeat(reverse: true);
+    }
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _breathingController.dispose();
     super.dispose();
+  }
+  
+  @override
+  void didUpdateWidget(covariant _ChatMessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isTyping) {
+      _breathingController.repeat(reverse: true);
+    } else {
+      _breathingController.stop();
+    }
   }
 
   @override
@@ -547,14 +572,17 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTicke
       messageContent = _buildMessageContent(timeString);
     }
 
-    final messageBubble = Container(
-      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-      decoration: BoxDecoration(
-        color: widget.message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
+    final messageBubble = ScaleTransition(
+      scale: _breathingAnimation,
+      child: Container(
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+        decoration: BoxDecoration(
+          color: widget.message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: messageContent,
       ),
-      child: messageContent,
     );
 
     final bubbleWithAvatars = Padding(
@@ -572,9 +600,11 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTicke
 
     return FadeTransition(
       opacity: _animation,
-      child: SizeTransition(
-        sizeFactor: _animation,
-        axisAlignment: 1.0, // Grow from the bottom up
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.0, 0.5),
+          end: Offset.zero,
+        ).animate(_animation),
         child: bubbleWithAvatars,
       ),
     );
@@ -604,7 +634,7 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with SingleTicke
                 ),
                 const SizedBox(width: 6),
                 const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
-              ],
+              ],'
           ],
         ),
       ],
