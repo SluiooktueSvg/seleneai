@@ -108,14 +108,21 @@ class SignInScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.bubble_chart, size: 40),
-                SizedBox(width: 10),
-                Text(
+                const Icon(Icons.bubble_chart, size: 40),
+                const SizedBox(width: 10),
+                const Text(
                   'Selene',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 20),
+                Image.network('https://storage.googleapis.com/gweb-cloud-blog-publish/images/Google_AI_Studio_logo.max-1100x1100.png', height: 30.0),
+                const SizedBox(width: 10),
+                const Text(
+                  'Google AI Studio',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -187,7 +194,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     super.initState();
     // Use the apiKey from the widget
     _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
-    _chat = _model.startChat();
+    _chat = _model.startChat(history: [
+      Content.system(
+        'System instruction: Your responses must be in Spanish, regardless of the language of the prompt.'
+      )
+    ]);
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
     _colorAnimation = TweenSequence<Color?>([
@@ -274,6 +285,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             const Text(
               'Selene',
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 16),
+            Image.network('https://storage.googleapis.com/gweb-cloud-blog-publish/images/Google_AI_Studio_logo.max-1100x1100.png', height: 20.0),
+             const SizedBox(width: 8),
+            const Text(
+              'Google AI Studio',
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
         ),
