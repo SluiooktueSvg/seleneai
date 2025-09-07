@@ -119,7 +119,7 @@ class SignInScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 20),
-                  Image.network('https://seeklogo.com/images/G/google-ai-logo-996E783562-seeklogo.com.png', height: 24.0),
+                  Image.asset('assets/images/google_ai_logo.png', height: 24.0),
                   const SizedBox(width: 10),
                   const Text(
                     'Google AI Studio',
@@ -141,7 +141,7 @@ class SignInScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton.icon(
               onPressed: _signInWithGoogle,
-              icon: Image.network('http://pngimg.com/uploads/google/google_PNG19635.png', height: 24.0),
+              icon: Image.asset('assets/images/google_logo.png', height: 24.0),
               label: const Text('Sign In with Google'),
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black, backgroundColor: Colors.white,
@@ -195,7 +195,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -285,7 +285,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
-            Image.network('https://seeklogo.com/images/G/google-ai-logo-996E783562-seeklogo.com.png', height: 16.0),
+            Image.asset('assets/images/google_ai_logo.png', height: 16.0),
              const SizedBox(width: 8),
             Flexible(
               child: const Text(
@@ -313,7 +313,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             children: [
               const DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Color(0xFF0C0C0C),
+                  color: const Color(0xFF0C0C0C),
                 ),
                 child: Text(
                   'Options',
