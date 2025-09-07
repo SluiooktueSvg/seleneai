@@ -1,8 +1,14 @@
 allprojects {
+    // This block solves the namespace issue for speech_to_text
     afterEvaluate { project ->
         if (project.name == 'speech_to_text') {
             android {
                 namespace 'com.csdcorp.speech_to_text'
+
+                // This block solves the JVM target inconsistency error
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
             }
         }
     }
