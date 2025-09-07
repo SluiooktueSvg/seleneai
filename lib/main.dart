@@ -600,24 +600,25 @@ class _ChatMessageBubble extends StatelessWidget {
           Image.file(File(message.imageUrl!)),
         if (message.text.isNotEmpty)
           Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        const SizedBox(height: 5),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Changed this line
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               timeString,
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            if (!message.isUser)
-              ...[
-                const SizedBox(width: 10),
-                const Text(
-                  'positive',
-                  style: TextStyle(color: Colors.greenAccent, fontSize: 12),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
-              ],
+            if (!message.isUser) ...[
+              const Spacer(),
+              const Text(
+                'positive',
+                style: TextStyle(color: Colors.greenAccent, fontSize: 12),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
+            ] else ...[
+              const Spacer(),
+            ]
           ],
         ),
       ],
