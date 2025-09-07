@@ -329,10 +329,10 @@ packages:
     dependency: "direct main"
     description:
       name: speech_to_text
-      sha256: "57fef1d41bdebe298e84842c89bb4ac91f31cdbec7830c8cb1fc6b91d03abd42"
+      sha256: ff8fbd31d039bdbac6c7ec9f0516d37df2cbea62c45198326d3b64034e6fb920
       url: "https://pub.dev"
     source: hosted
-    version: "6.6.0"
+    version: "6.1.1"
   speech_to_text_macos:
     dependency: transitive
     description:

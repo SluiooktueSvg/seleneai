@@ -16,7 +16,7 @@ dependencies:
   google_sign_in: ^5.4.4
   google_generative_ai: ^0.2.2
   intl: ^0.17.0
-  speech_to_text: ^6.1.1
+  speech_to_text: 6.1.1
   flutter_tts: ^3.6.3
 
 dev_dependencies:
