@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
-import 'package:seleneai/voice_chat_screen.dart';
+import 'voice_chat_screen.dart';
 
 // Create a single, top-level instance of GoogleSignIn
 final GoogleSignIn _googleSignIn = GoogleSignIn();
