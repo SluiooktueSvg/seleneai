@@ -194,11 +194,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     super.initState();
     // Use the apiKey from the widget
     _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
-    _chat = _model.startChat(history: [
-      Content.system(
-        'System instruction: Your responses must be in Spanish, regardless of the language of the prompt.'
-      )
-    ]);
+    _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
     _colorAnimation = TweenSequence<Color?>([
@@ -240,7 +236,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     try {
-      final response = await _chat.sendMessage(Content.text(userMessage.text));
+      final response = await _chat.sendMessage(Content.text("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n${userMessage.text}"));
       final aiMessage = ChatMessage(
         text: response.text ?? '...',
         isUser: false,
