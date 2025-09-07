@@ -175,6 +175,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
   final List<ChatMessage> _messages = [];
@@ -225,23 +226,26 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       isUser: true,
       timestamp: DateTime.now(),
     );
+    final text = _textController.text;
     _textController.clear();
 
+    // Insert user message
+    _messages.insert(0, userMessage);
+    _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
     setState(() {
-      _messages.insert(0, userMessage);
       _isTyping = true;
     });
 
     try {
-      final response = await _chat.sendMessage(Content.text("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n${userMessage.text}"));
+      final response = await _chat.sendMessage(Content.text("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
       final aiMessage = ChatMessage(
         text: response.text ?? '...',
         isUser: false,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.insert(0, aiMessage);
-      });
+      // Insert AI message
+      _messages.insert(0, aiMessage);
+      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
     } catch (e) {
       print('Error sending message: $e');
       final errorMessage = ChatMessage(
@@ -249,9 +253,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         isUser: false,
         timestamp: DateTime.now(),
       );
-      setState(() {
-        _messages.insert(0, errorMessage);
-      });
+      // Insert error message
+      _messages.insert(0, errorMessage);
+      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
     } finally {
        setState(() {
         _isTyping = false;
@@ -260,6 +264,39 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   bool get _hasStartedChat => _messages.isNotEmpty;
+
+  Widget _buildAnimatedItem(BuildContext context, int index, Animation<double> animation) {
+    final message = _messages[index];
+    
+    final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack, // Spring-like effect
+      ),
+    );
+
+    final slideAnimation = Tween<Offset>(begin: const Offset(0.0, 0.5), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position: slideAnimation,
+        child: ScaleTransition(
+          scale: scaleAnimation,
+          child: _ChatMessageBubble(
+            key: ObjectKey(message), // Important for performance
+            message: message,
+            userPhotoUrl: user?.photoURL,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -355,9 +392,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           ),
                           TextButton(
                             onPressed: () {
-                              setState(() {
-                                _messages.clear();
-                              });
+                              // Clear the list and update the AnimatedList
+                              final int count = _messages.length;
+                              for (int i = 0; i < count; i++) {
+                                _listKey.currentState?.removeItem(0, (context, animation) => _buildAnimatedItem(context, 0, animation));
+                              }
+                              _messages.clear();
+                              setState((){});
                               Navigator.of(context).pop();
                             },
                             child: const Text('Delete'),
@@ -384,7 +425,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       body: Column(
         children: [
           Expanded(
-            child: !_hasStartedChat
+            child: _messages.isEmpty
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -411,27 +452,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                : AnimatedList(
+                    key: _listKey,
                     reverse: true,
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[index];
-                      // Specific check for typing indicator
-                      if (message.isUser == false && message.text == 'typing') {
-                         return _ChatMessageBubble(
-                          key: const ValueKey('typing-indicator'),
-                          message: message,
-                          userPhotoUrl: null,
-                          isTyping: true,
-                        );
-                      }
-                      return _ChatMessageBubble(
-                        key: ObjectKey(message),
-                        message: message,
-                        userPhotoUrl: user?.photoURL,
-                      );
-                    },
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    initialItemCount: _messages.length,
+                    itemBuilder: _buildAnimatedItem,
                   ),
           ),
           if (_hasStartedChat) _buildTextComposer(),
@@ -488,7 +514,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 }
 
-class _ChatMessageBubble extends StatefulWidget {
+// _ChatMessageBubble is now a stateless widget, as animations are handled by AnimatedList
+class _ChatMessageBubble extends StatelessWidget {
   const _ChatMessageBubble({
     super.key,
     required this.message,
@@ -501,62 +528,9 @@ class _ChatMessageBubble extends StatefulWidget {
   final bool isTyping;
 
   @override
-  State<_ChatMessageBubble> createState() => _ChatMessageBubbleState();
-}
-
-class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProviderStateMixin {
-  late final AnimationController _animationController;
-  late final Animation<double> _animation;
-  late final AnimationController _breathingController;
-  late final Animation<double> _breathingAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600), // Slightly longer for the bounce
-    );
-    
-    // Use a different curve for user messages to create a bounce effect
-    final curve = widget.message.isUser ? Curves.elasticOut : Curves.easeOut;
-    _animation = CurvedAnimation(parent: _animationController, curve: curve);
-    _animationController.forward();
-    
-    _breathingController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1500));
-    _breathingAnimation =
-        Tween<double>(begin: 1.0, end: 1.02).animate(CurvedAnimation(
-      parent: _breathingController,
-      curve: Curves.easeInOut,
-    ));
-
-    if (widget.isTyping) {
-      _breathingController.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _breathingController.dispose();
-    super.dispose();
-  }
-  
-  @override
-  void didUpdateWidget(covariant _ChatMessageBubble oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isTyping) {
-      _breathingController.repeat(reverse: true);
-    } else {
-      _breathingController.stop();
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final timeFormat = DateFormat('h:mm a');
-    final timeString = timeFormat.format(widget.message.timestamp);
+    final timeString = timeFormat.format(message.timestamp);
 
     final aiAvatar = CircleAvatar(
       backgroundColor: Colors.blue.shade900,
@@ -564,59 +538,40 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
     );
 
     final userAvatar = CircleAvatar(
-      backgroundImage: widget.userPhotoUrl != null ? NetworkImage(widget.userPhotoUrl!) : null,
-      child: widget.userPhotoUrl == null ? const Icon(Icons.person) : null,
+      backgroundImage: userPhotoUrl != null ? NetworkImage(userPhotoUrl!) : null,
+      child: userPhotoUrl == null ? const Icon(Icons.person) : null,
     );
 
-    Widget messageContent;
-    if (widget.isTyping) {
-      messageContent = _buildTypingIndicator(timeString);
-    } else {
-      messageContent = _buildMessageContent(timeString);
-    }
-
-    final messageBubble = ScaleTransition(
-      scale: widget.message.isUser ? _animation : _breathingAnimation, // Apply bounce to user, breath to AI
-      child: Container(
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-        decoration: BoxDecoration(
-          color: widget.message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: messageContent,
+    final messageBubble = Container(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+      decoration: BoxDecoration(
+        color: message.isUser ? const Color(0xFF2E3A46) : const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
       ),
+      child: isTyping ? _buildTypingIndicator(timeString) : _buildMessageContent(timeString),
     );
 
-    final bubbleWithAvatars = Padding(
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       child: Row(
-        mainAxisAlignment: widget.message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (!widget.message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
-          // Use a SlideTransition for the entrance animation
-          SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.0, 0.2),
-              end: Offset.zero,
-            ).animate(_animation), 
-            child: FadeTransition(opacity: _animation, child: messageBubble),
-          ),
-          if (widget.message.isUser) ...[const SizedBox(width: 8), userAvatar],
+          if (!message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
+          messageBubble,
+          if (message.isUser) ...[const SizedBox(width: 8), userAvatar],
         ],
       ),
     );
-
-    return bubbleWithAvatars;
   }
 
   Widget _buildMessageContent(String timeString) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.message.text.isNotEmpty)
-          Text(widget.message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
+        if (message.text.isNotEmpty)
+          Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
         const SizedBox(height: 5),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -626,7 +581,7 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
               timeString,
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            if (!widget.message.isUser)
+            if (!message.isUser)
               ...[
                 const SizedBox(width: 10),
                 const Text(
