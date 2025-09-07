@@ -108,23 +108,25 @@ class SignInScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.bubble_chart, size: 40),
-                const SizedBox(width: 10),
-                const Text(
-                  'Selene',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(width: 20),
-                Image.network('https://storage.googleapis.com/gweb-cloud-blog-publish/images/Google_AI_Studio_logo.max-1100x1100.png', height: 30.0),
-                const SizedBox(width: 10),
-                const Text(
-                  'Google AI Studio',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ],
+            FittedBox(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.bubble_chart, size: 40),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Selene',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(width: 20),
+                  Image.network('https://developers.google.com/static/ml-kit/images/use-cases/custom-models-gemini.png', height: 24.0),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Google AI Studio',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -283,11 +285,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
-            Image.network('https://storage.googleapis.com/gweb-cloud-blog-publish/images/Google_AI_Studio_logo.max-1100x1100.png', height: 20.0),
+            Image.network('https://developers.google.com/static/ml-kit/images/use-cases/custom-models-gemini.png', height: 16.0),
              const SizedBox(width: 8),
-            const Text(
-              'Google AI Studio',
-              style: TextStyle(color: Colors.white, fontSize: 16),
+            Flexible(
+              child: const Text(
+                'Google AI Studio',
+                style: TextStyle(color: Colors.white, fontSize: 14),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
