@@ -190,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -228,7 +228,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _textController.clear();
 
     setState(() {
-      _messages.add(userMessage);
+      _messages.insert(0, userMessage);
       _isTyping = true;
     });
 
@@ -240,7 +240,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         timestamp: DateTime.now(),
       );
       setState(() {
-        _messages.add(aiMessage);
+        _messages.insert(0, aiMessage);
       });
     } catch (e) {
       print('Error sending message: $e');
@@ -250,7 +250,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         timestamp: DateTime.now(),
       );
       setState(() {
-        _messages.add(errorMessage);
+        _messages.insert(0, errorMessage);
       });
     } finally {
        setState(() {
@@ -414,18 +414,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     reverse: true,
-                    itemCount: _messages.length + (_isTyping ? 1 : 0),
+                    itemCount: _messages.length,
                     itemBuilder: (context, index) {
-                      if (_isTyping && index == 0) {
-                        return _ChatMessageBubble(
+                      final message = _messages[index];
+                      // Specific check for typing indicator
+                      if (message.isUser == false && message.text == 'typing') {
+                         return _ChatMessageBubble(
                           key: const ValueKey('typing-indicator'),
-                          message: ChatMessage(text: '', isUser: false, timestamp: DateTime.now()),
+                          message: message,
                           userPhotoUrl: null,
                           isTyping: true,
                         );
                       }
-                      final messageIndex = _isTyping ? index -1 : index;
-                      final message = _messages.reversed.toList()[messageIndex];
                       return _ChatMessageBubble(
                         key: ObjectKey(message),
                         message: message,
@@ -515,9 +515,12 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600), // Slightly longer for the bounce
     );
-    _animation = CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
+    
+    // Use a different curve for user messages to create a bounce effect
+    final curve = widget.message.isUser ? Curves.elasticOut : Curves.easeOut;
+    _animation = CurvedAnimation(parent: _animationController, curve: curve);
     _animationController.forward();
     
     _breathingController = AnimationController(
@@ -573,7 +576,7 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
     }
 
     final messageBubble = ScaleTransition(
-      scale: _breathingAnimation,
+      scale: widget.message.isUser ? _animation : _breathingAnimation, // Apply bounce to user, breath to AI
       child: Container(
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
@@ -592,22 +595,20 @@ class _ChatMessageBubbleState extends State<_ChatMessageBubble> with TickerProvi
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!widget.message.isUser) ...[aiAvatar, const SizedBox(width: 8)],
-          messageBubble,
+          // Use a SlideTransition for the entrance animation
+          SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.0, 0.2),
+              end: Offset.zero,
+            ).animate(_animation), 
+            child: FadeTransition(opacity: _animation, child: messageBubble),
+          ),
           if (widget.message.isUser) ...[const SizedBox(width: 8), userAvatar],
         ],
       ),
     );
 
-    return FadeTransition(
-      opacity: _animation,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0.0, 0.5),
-          end: Offset.zero,
-        ).animate(_animation),
-        child: bubbleWithAvatars,
-      ),
-    );
+    return bubbleWithAvatars;
   }
 
   Widget _buildMessageContent(String timeString) {
