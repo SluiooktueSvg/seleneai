@@ -271,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: animation,
-        curve: Curves.easeOutBack, // Spring-like effect
+        curve: Curves.elasticOut, // More bouncy spring-like effect
       ),
     );
 
@@ -283,7 +283,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     );
 
     return FadeTransition(
-      opacity: animation,
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn), // Smoother fade-in
       child: SlideTransition(
         position: slideAnimation,
         child: ScaleTransition(
