@@ -292,7 +292,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                title: const Text('Voice Chat', style: TextStyle(color: Colors.white)),
+                title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -314,16 +314,40 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
                 onTap: () {
-                  setState(() {
-                    _messages.clear();
-                  });
-                  Navigator.of(context).pop();
+                  // Show a confirmation dialog before deleting the chat history
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Delete Chat'),
+                        content: const Text('Are you sure you want to delete the current conversation?'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _messages.clear();
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.arrow_forward, color: Colors.white),
                 title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
                 onTap: () async {
+                  // Sign out from Google and Firebase
                   await _googleSignIn.signOut();
                   await FirebaseAuth.instance.signOut();
                 },
