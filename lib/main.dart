@@ -492,7 +492,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
                   hintText: 'Explore',
                   hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
+                  border: InputBordernone,
                 ),
                 onSubmitted: (value) => _handleSendMessage(),
               ),
@@ -572,9 +572,8 @@ class _ChatMessageBubble extends StatelessWidget {
       children: [
         if (message.text.isNotEmpty)
           Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        const SizedBox(height: 5),
         Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // Changed this line
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
