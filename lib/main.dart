@@ -186,7 +186,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
