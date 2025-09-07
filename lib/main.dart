@@ -246,7 +246,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('Selene', style: TextStyle(color: Colors.white, fontSize: 18)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.bubble_chart, color: Colors.white),
+            const SizedBox(width: 8),
+            const Text(
+              'Selene',
+              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         actions: [
           Builder(
             builder: (context) => IconButton(
