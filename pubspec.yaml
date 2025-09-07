@@ -31,3 +31,4 @@ flutter:
   # Add this section to include your .env file as an asset
   assets:
     - .env
+    - assets/images/

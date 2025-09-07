@@ -119,7 +119,7 @@ class SignInScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(width: 20),
-                  Image.network('https://developers.google.com/static/ml-kit/images/use-cases/custom-models-gemini.png', height: 24.0),
+                  Image.network('https://seeklogo.com/images/G/google-ai-logo-996E783562-seeklogo.com.png', height: 24.0),
                   const SizedBox(width: 10),
                   const Text(
                     'Google AI Studio',
@@ -285,7 +285,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
-            Image.network('https://developers.google.com/static/ml-kit/images/use-cases/custom-models-gemini.png', height: 16.0),
+            Image.network('https://seeklogo.com/images/G/google-ai-logo-996E783562-seeklogo.com.png', height: 16.0),
              const SizedBox(width: 8),
             Flexible(
               child: const Text(
