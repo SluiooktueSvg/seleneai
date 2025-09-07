@@ -194,18 +194,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
-    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 10));
     _colorAnimation = TweenSequence<Color?>([
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.blueAccent, end: Colors.cyanAccent),
+        tween: ColorTween(begin: Colors.blueAccent, end: Colors.cyanAccent).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.cyanAccent, end: Colors.purpleAccent),
+        tween: ColorTween(begin: Colors.cyanAccent, end: Colors.purpleAccent).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.purpleAccent, end: Colors.blueAccent),
+        tween: ColorTween(begin: Colors.purpleAccent, end: Colors.orangeAccent).chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 1.0,
+      ),
+      TweenSequenceItem(
+        tween: ColorTween(begin: Colors.orangeAccent, end: Colors.blueAccent).chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
     ]).animate(_animationController);
@@ -492,7 +496,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
                   hintText: 'Explore',
                   hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBordernone,
+                  border: InputBorder.none,
                 ),
                 onSubmitted: (value) => _handleSendMessage(),
               ),
