@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
 
@@ -157,11 +159,13 @@ class ChatMessage {
   final String text;
   final bool isUser;
   final DateTime timestamp;
+  final String? imageUrl;
 
   const ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
+    this.imageUrl,
   });
 }
 
@@ -180,6 +184,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser;
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
+  File? _imageFile;
 
   late final GenerativeModel _model;
   late final ChatSession _chat;
@@ -213,7 +218,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         weight: 1.0,
       ),
     ]).animate(_animationController);
-    _animationController.repeat();
+    _animationController.repeat(reverse: true);
   }
 
   @override
@@ -222,13 +227,23 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _handleSendMessage() async {
-    if (_textController.text.isEmpty) return;
+    if (_textController.text.isEmpty && _imageFile == null) return;
 
     final userMessage = ChatMessage(
       text: _textController.text,
       isUser: true,
       timestamp: DateTime.now(),
+      imageUrl: _imageFile?.path,
     );
     final text = _textController.text;
     _textController.clear();
@@ -241,7 +256,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     try {
-      final response = await _chat.sendMessage(Content.text("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
+      final content = <Part>[];
+      if (_imageFile != null) {
+        final imageBytes = await _imageFile!.readAsBytes();
+        content.add(DataPart('image/jpeg', imageBytes));
+      }
+      content.add(TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
+      final response = await _chat.sendMessage(Content.multi(content));
       final aiMessage = ChatMessage(
         text: response.text ?? '...',
         isUser: false,
@@ -263,6 +284,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     } finally {
        setState(() {
         _isTyping = false;
+        _imageFile = null;
       });
     }
   }
@@ -354,7 +376,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ListTile(
                 leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
                 title: const Text('Camera', style: TextStyle(color: Colors.white)),
-                onTap: () {},
+                onTap: _pickImage,
               ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq, color: Colors.white),
@@ -481,38 +503,60 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Widget _buildTextComposer() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(30.0),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _textController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
-                  hintText: 'Explore',
-                  hintStyle: TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
+      child: Column(
+        children: [
+          if (_imageFile != null)
+            Stack(
+              children: [
+                Image.file(_imageFile!),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        _imageFile = null;
+                      });
+                    },
+                  ),
                 ),
-                onSubmitted: (value) => _handleSendMessage(),
-              ),
+              ],
             ),
-            IconButton(
-              icon: const Icon(Icons.mic, color: Colors.white54),
-              onPressed: () {
-                // Handle voice input
-              },
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(30.0),
             ),
-            IconButton(
-              icon: const Icon(Icons.send, color: Colors.white54),
-              onPressed: _handleSendMessage,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
+                      hintText: 'Explore',
+                      hintStyle: TextStyle(color: Colors.white54),
+                      border: InputBorder.none,
+                    ),
+                    onSubmitted: (value) => _handleSendMessage(),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.mic, color: Colors.white54),
+                  onPressed: () {
+                    // Handle voice input
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send, color: Colors.white54),
+                  onPressed: _handleSendMessage,
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -574,6 +618,8 @@ class _ChatMessageBubble extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (message.imageUrl != null) 
+          Image.file(File(message.imageUrl!)),
         if (message.text.isNotEmpty)
           Text(message.text, style: const TextStyle(color: Colors.white, fontSize: 16)),
         Row(
