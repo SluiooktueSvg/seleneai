@@ -260,7 +260,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
-    final apiKey = dotenv.env['AIzaSyDE6EX2yL5yJLEBNv6nZ84jK-BZwtfHidw']!;
+    final apiKey = dotenv.env['GEMINI_API_KEY']!;
 
     return Scaffold(
       appBar: AppBar(
