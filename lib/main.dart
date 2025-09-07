@@ -291,7 +291,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onTap: () {},
               ),
               ListTile(
-                leading: const Icon(Icons.record_voice_over, color: Colors.white),
+                leading: const Icon(Icons.graphic_eq, color: Colors.white),
                 title: const Text('Voice Chat', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.push(
@@ -312,7 +312,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('Delete Conversation', style: TextStyle(color: Colors.redAccent)),
+                title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
                 onTap: () {
                   setState(() {
                     _messages.clear();
