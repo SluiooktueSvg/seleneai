@@ -6,17 +6,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Import dotenv
+
 import 'voice_chat_screen.dart';
 
 // Create a single, top-level instance of GoogleSignIn
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-// IMPORTANT: Replace with your actual API key
-const String apiKey = 'AIzaSyDE6EX2yL5yJLEBNv6nZ84jK-BZwtfHidw';
+// The API key is now loaded from .env
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Load the environment variables
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -42,12 +45,23 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Retrieve the API key safely
+    final apiKey = dotenv.env['GEMINI_API_KEY'];
+    if (apiKey == null || apiKey.isEmpty) {
+        return const Scaffold(
+            body: Center(
+                child: Text('Error: API Key is not configured. Please check your .env file.'),
+            ),
+        );
+    }
+
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.active) {
           if (snapshot.hasData) {
-            return const ChatScreen();
+            // Pass the API key to ChatScreen
+            return ChatScreen(apiKey: apiKey);
           }
           return const SignInScreen();
         }
@@ -60,6 +74,7 @@ class AuthWrapper extends StatelessWidget {
     );
   }
 }
+
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -147,7 +162,9 @@ class ChatMessage {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  // Receive the API key
+  final String apiKey;
+  const ChatScreen({super.key, required this.apiKey});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -168,7 +185,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);
+    // Use the apiKey from the widget
+    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
@@ -242,6 +260,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
+    final apiKey = dotenv.env['GEMINI_API_KEY']!;
 
     return Scaffold(
       appBar: AppBar(
@@ -296,7 +315,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const VoiceChatScreen()),
+                    MaterialPageRoute(builder: (context) => VoiceChatScreen(apiKey: apiKey)),
                   );
                 },
               ),

@@ -3,11 +3,11 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
-// IMPORTANT: Replace with your actual API key
-const String apiKey = 'AIzaSyDE6EX2yL5yJLEBNv6nZ84jK-BZwtfHidw';
+// API Key is now passed from the main screen.
 
 class VoiceChatScreen extends StatefulWidget {
-  const VoiceChatScreen({super.key});
+  final String apiKey;
+  const VoiceChatScreen({super.key, required this.apiKey});
 
   @override
   State<VoiceChatScreen> createState() => _VoiceChatScreenState();
@@ -16,20 +16,34 @@ class VoiceChatScreen extends StatefulWidget {
 class _VoiceChatScreenState extends State<VoiceChatScreen> {
   final SpeechToText _speechToText = SpeechToText();
   final FlutterTts _flutterTts = FlutterTts();
-  final GenerativeModel _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
+  late final GenerativeModel _model;
 
   bool _isListening = false;
-  String _text = 'Press the button and start speaking';
+  String _userText = 'Press the button to start the conversation';
   String _aiResponse = '';
 
   @override
   void initState() {
     super.initState();
+    // Use the apiKey from the widget
+    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: widget.apiKey);
     _initSpeech();
+    _initTts();
   }
 
   void _initSpeech() async {
     await _speechToText.initialize();
+  }
+
+  void _initTts() {
+    _flutterTts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() {
+          _userText = "Listening...";
+        });
+        _listen();
+      }
+    });
   }
 
   @override
@@ -37,19 +51,33 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Voice Chat'),
+        centerTitle: true,
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(_text, style: const TextStyle(fontSize: 24, color: Colors.white)),
-            const SizedBox(height: 20),
-            Text(_aiResponse, style: const TextStyle(fontSize: 20, color: Colors.greenAccent)),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                _userText, 
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 24, color: Colors.white, fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                _aiResponse, 
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 22, color: Colors.greenAccent, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         onPressed: _listen,
+        tooltip: 'Listen',
         child: Icon(_isListening ? Icons.mic : Icons.mic_none),
       ),
     );
@@ -59,17 +87,26 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
     if (!_isListening) {
       bool available = await _speechToText.initialize();
       if (available) {
-        setState(() => _isListening = true);
+        setState(() {
+          _isListening = true;
+          _aiResponse = ''; // Clear previous AI response
+          _userText = 'Listening...';
+        });
         _speechToText.listen(
-          onResult: (val) => setState(() {
-            _text = val.recognizedWords;
-            if (val.finalResult) {
-              _isListening = false;
-              _sendToAI(_text);
+          onResult: (val) {
+            if (val.finalResult && val.recognizedWords.isNotEmpty) {
+              setState(() {
+                _userText = val.recognizedWords;
+                _isListening = false;
+              });
+              _speechToText.stop();
+              _sendToAI(_userText);
             }
-          }),
+          },
+          listenFor: const Duration(seconds: 10),
+          pauseFor: const Duration(seconds: 3),
         );
-      } 
+      }
     } else {
       setState(() => _isListening = false);
       _speechToText.stop();
@@ -77,12 +114,16 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   }
 
   void _sendToAI(String message) async {
+    setState(() {
+      _aiResponse = 'Thinking...';
+    });
     try {
       final response = await _model.generateContent([Content.text(message)]);
+      final responseText = response.text ?? 'Sorry, I could not understand.';
       setState(() {
-        _aiResponse = response.text ?? '...';
-        _speak(_aiResponse);
+        _aiResponse = responseText;
       });
+      _speak(responseText);
     } catch (e) {
       print('Error sending message to AI: $e');
       setState(() {
@@ -92,6 +133,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   }
 
   void _speak(String text) async {
-    await _flutterTts.speak(text);
+    if (text.isNotEmpty) {
+      await _flutterTts.speak(text);
+    }
   }
 }
