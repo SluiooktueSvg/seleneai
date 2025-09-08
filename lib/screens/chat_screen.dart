@@ -71,6 +71,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   bool _isHistoryMenuOpen = false;
   bool _isConversationMenuOpen = false;
 
+  // Voice Chat State
+  bool _isVoiceChatActive = false;
+  String _voiceChatStatus = "Toca para hablar";
+  late final AnimationController _voiceAnimationController;
+
   @override
   void initState() {
     super.initState();
@@ -113,10 +118,21 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     _initSpeech();
+    _voiceAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
   }
 
   void _initSpeech() async {
     await _speechToText.initialize();
+    _flutterTts.setCompletionHandler(() {
+      if (mounted) {
+        setState(() {
+           _voiceChatStatus = "Toca para hablar";
+        });
+      }
+    });
   }
 
   @override
@@ -125,6 +141,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _phraseTimer.cancel();
     _closeHistoryMenu(); 
     _closeConversationMenu();
+    _voiceAnimationController.dispose();
     super.dispose();
   }
   
@@ -196,24 +213,23 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _handleSendMessage({bool isVoiceInput = false}) async {
-    if (_textController.text.isEmpty && _imageFile == null) return;
+  Future<void> _handleSendMessage({String? text, bool isVoiceInput = false}) async {
+    final messageText = text ?? _textController.text;
+    if (messageText.isEmpty && _imageFile == null) return;
 
-    final text = _textController.text;
-    final image = _imageFile;
     _textController.clear();
+    final image = _imageFile;
     _imageFile = null;
 
-    // Create a new conversation if it's the first message
     if (_currentConversation == null) {
       final newConversationId = DateTime.now().millisecondsSinceEpoch.toString();
-      final title = text.isNotEmpty ? (text.length > 30 ? text.substring(0, 30) : text) : "Chat con Imagen";
+      final title = messageText.isNotEmpty ? (messageText.length > 30 ? messageText.substring(0, 30) : messageText) : "Chat con Imagen";
       _currentConversation = Conversation(id: newConversationId, title: title, messages: []);
       _conversations.insert(0, _currentConversation!);
     }
 
     final userMessage = ChatMessage(
-      text: text,
+      text: messageText,
       isUser: true,
       timestamp: DateTime.now(),
       imageUrl: image?.path,
@@ -229,6 +245,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     
     setState(() {
       _isTyping = true;
+       if(isVoiceInput) _voiceChatStatus = "Procesando...";
     });
 
     try {
@@ -237,8 +254,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         final imageBytes = await image.readAsBytes();
         content.add(DataPart('image/jpeg', imageBytes));
       }
-      if (text.isNotEmpty) {
-         content.add(TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
+      if (messageText.isNotEmpty) {
+         content.add(TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$messageText"));
       }
      
       final response = await _chat.sendMessage(Content.multi(content));
@@ -276,30 +293,53 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  void _startListening() async {
-    if (!_isListening) {
-      bool available = await _speechToText.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _speechToText.listen(
-          onResult: (result) => setState(() {
-            _textController.text = result.recognizedWords;
-          }),
-        );
+  void _toggleVoiceChat() {
+    setState(() {
+      _isVoiceChatActive = !_isVoiceChatActive;
+      if (_isVoiceChatActive) {
+        _startVoiceListening();
       }
+    });
+  }
+
+  void _startVoiceListening() {
+    if (mounted && _isVoiceChatActive) {
+      setState(() {
+        _isListening = true;
+        _voiceChatStatus = "Escuchando...";
+      });
+      _speechToText.listen(
+        onResult: (result) {
+          if (result.finalResult) {
+            _handleSendMessage(text: result.recognizedWords, isVoiceInput: true);
+          }
+        },
+        listenFor: const Duration(seconds: 10),
+        onDevice: true,
+        cancelOnError: true,
+        partialResults: false,
+        localeId: 'es_ES',
+      );
+      // Automatically stop listening after a timeout
+      Timer(const Duration(seconds: 10), _stopVoiceListening);
     }
   }
 
-  void _stopListening() async {
-    if (_isListening) {
-      await _speechToText.stop();
-      setState(() => _isListening = false);
-      _handleSendMessage(isVoiceInput: true);
+  void _stopVoiceListening() {
+    if (_isListening && mounted) {
+      _speechToText.stop();
+      setState(() {
+        _isListening = false;
+        _voiceChatStatus = "Toca para hablar";
+      });
     }
   }
 
   void _speak(String text) async {
-    await _flutterTts.speak(text);
+    if (mounted) {
+      setState(() => _voiceChatStatus = "Hablando...");
+      await _flutterTts.speak(text);
+    }
   }
 
   void _toggleHistoryMenu() {
@@ -563,8 +603,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       actions: [
         IconButton(
           key: _historyMenuKey,
-          icon: const Icon(Icons.edit_outlined, color: Colors.white),
+          icon: const Icon(Icons.add, color: Colors.white),
           onPressed: _startNewChat,
+        ),
+        IconButton(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
+          onPressed: _toggleHistoryMenu,
         ),
       ],
     );
@@ -608,55 +652,104 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         },
         onLoadConversation: _loadConversation,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: _messages.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedBuilder(
-                          animation: _colorAnimation,
-                          builder: (context, child) {
-                            return Text(
-                              '${_getGreeting()}, $firstName',
-                              style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: _colorAnimation.value,
-                              ),
-                            );
-                          },
+          Column(
+            children: [
+              Expanded(
+                child: _messages.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AnimatedBuilder(
+                              animation: _colorAnimation,
+                              builder: (context, child) {
+                                return Text(
+                                  '${_getGreeting()}, $firstName',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: _colorAnimation.value,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 3),
+                            const AnimatedPhraseCarousel(),
+                            const SizedBox(height: 15),
+                            _buildTextComposer(),
+                          ],
                         ),
-                        const SizedBox(height: 3),
-                        const AnimatedPhraseCarousel(),
-                        const SizedBox(height: 15),
-                        _buildTextComposer(),
-                      ],
-                    ),
-                  )
-                : AnimatedList(
-                    key: _listKey,
-                    reverse: true,
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    initialItemCount: _messages.length,
-                    itemBuilder: (context, index, animation) {
-                       final message = _messages[index];
-                       return _buildAnimatedItem(context, index, animation, message);
-                    },
-                  ),
+                      )
+                    : AnimatedList(
+                        key: _listKey,
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        initialItemCount: _messages.length,
+                        itemBuilder: (context, index, animation) {
+                          final message = _messages[index];
+                          return _buildAnimatedItem(context, index, animation, message);
+                        },
+                      ),
+              ),
+              if (_hasStartedChat) _buildTextComposer(),
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text(
+                  '© 2025 Selene. All rights reserved. SeleneAI.',
+                  style: TextStyle(fontSize: 10, color: Colors.white30),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
-          if (_hasStartedChat) _buildTextComposer(),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              '© 2025 Selene. All rights reserved. SeleneAI.',
-              style: TextStyle(fontSize: 10, color: Colors.white30),
-              textAlign: TextAlign.center,
-            ),
-          ),
+          if (_isVoiceChatActive) _buildVoiceChatOverlay(),
         ],
+      ),
+    );
+  }
+  
+  Widget _buildVoiceChatOverlay() {
+    return GestureDetector(
+      onTap: _toggleVoiceChat,
+      child: Container(
+        color: Colors.black.withOpacity(0.7),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _isListening ? _stopVoiceListening : _startVoiceListening,
+                child: AnimatedBuilder(
+                  animation: _voiceAnimationController,
+                  builder: (context, child) {
+                    final double size = _isListening ? 150.0 + _voiceAnimationController.value * 30 : 150.0;
+                    return Container(
+                      width: size,
+                      height: size,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isListening ? Colors.cyanAccent.withOpacity(0.5) : Colors.white24,
+                        border: Border.all(
+                          color: _isListening ? Colors.cyanAccent : Colors.transparent,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: Colors.white,
+                        size: 80,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(_voiceChatStatus, style: const TextStyle(color: Colors.white54, fontSize: 18)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -671,6 +764,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ),
         child: Row(
           children: [
+            IconButton(
+              icon: const Icon(Icons.add, color: Colors.white54),
+              onPressed: _pickImage,
+            ),
             Expanded(
               child: TextField(
                 controller: _textController,
@@ -694,21 +791,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onChanged: (text) {
                   setState(() {});
                 },
-                onSubmitted: (value) => _handleSendMessage(isVoiceInput: false),
-              ),
-            ),
-            GestureDetector(
-              onTapDown: (_) => _startListening(),
-              onTapUp: (_) => _stopListening(),
-              onLongPressEnd: (_) => _stopListening(),
-              child: Icon(
-                _isListening ? Icons.mic : Icons.mic_none,
-                color: Colors.white54,
+                onSubmitted: (value) => _handleSendMessage(),
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.send, color: Colors.white54),
-              onPressed: () => _handleSendMessage(isVoiceInput: false),
+              icon: const Icon(Icons.graphic_eq, color: Colors.white54),
+              onPressed: _toggleVoiceChat,
             ),
           ],
         ),
