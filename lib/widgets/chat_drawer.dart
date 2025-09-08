@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:selene/models/conversation.dart';
 
 class ChatDrawer extends StatelessWidget {
   final User? user;
+  final List<Conversation> conversations;
   final VoidCallback onNewChat;
   final VoidCallback onSignOut;
+  final Function(Conversation) onLoadConversation;
 
   const ChatDrawer({
     super.key,
     required this.user,
+    required this.conversations,
     required this.onNewChat,
     required this.onSignOut,
+    required this.onLoadConversation,
   });
 
   @override
@@ -86,13 +91,30 @@ class ChatDrawer extends StatelessWidget {
               ),
               onTap: () { /* No action yet */ },
             ),
-            const Expanded(
-              child: Center(
-                child: Text(
-                  'Aquí se mostrará tu historial de chats.',
-                  style: TextStyle(color: Colors.white54),
-                ),
-              ),
+            Expanded(
+              child: conversations.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Aquí se mostrará tu historial de chats.',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: conversations.length,
+                      itemBuilder: (context, index) {
+                        final conversation = conversations[index];
+                        return ListTile(
+                          leading: const Icon(Icons.chat_bubble_outline, color: Colors.white70),
+                          title: Text(
+                            conversation.title,
+                            style: const TextStyle(color: Colors.white),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: () => onLoadConversation(conversation),
+                        );
+                      },
+                    ),
             ),
             const Divider(color: Colors.white24),
             ListTile(
@@ -105,11 +127,10 @@ class ChatDrawer extends StatelessWidget {
                     : null,
               ),
               title: Text(user?.displayName ?? 'Usuario', style: const TextStyle(color: Colors.white)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.white),
-              title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
-              onTap: onSignOut,
+              trailing: IconButton(
+                icon: const Icon(Icons.logout, color: Colors.white),
+                onPressed: onSignOut,
+              ),
             ),
           ],
         ),
