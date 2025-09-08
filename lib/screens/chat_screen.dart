@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 
@@ -13,7 +12,7 @@ import '../models/chat_message.dart';
 import '../widgets/chat_message_bubble.dart';
 import 'voice_chat_screen.dart';
 
-final GoogleSignIn _googleSignIn = GoogleSignIn();
+final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
 class ChatScreen extends StatefulWidget {
   final String apiKey;
@@ -54,22 +53,27 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
-    _animationController = AnimationController(vsync: this, duration: const Duration(seconds: 10));
+    _animationController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 10));
     _colorAnimation = TweenSequence<Color?>([
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.blueAccent, end: Colors.cyanAccent).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: ColorTween(begin: Colors.blueAccent, end: Colors.cyanAccent)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.cyanAccent, end: Colors.purpleAccent).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: ColorTween(begin: Colors.cyanAccent, end: Colors.purpleAccent)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.purpleAccent, end: Colors.orangeAccent).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: ColorTween(begin: Colors.purpleAccent, end: Colors.orangeAccent)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
       TweenSequenceItem(
-        tween: ColorTween(begin: Colors.orangeAccent, end: Colors.blueAccent).chain(CurveTween(curve: Curves.easeInOut)),
+        tween: ColorTween(begin: Colors.orangeAccent, end: Colors.blueAccent)
+            .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 1.0,
       ),
     ]).animate(_animationController);
@@ -103,7 +107,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -124,7 +129,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _textController.clear();
 
     _messages.insert(0, userMessage);
-    _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
+    _listKey.currentState
+        ?.insertItem(0, duration: const Duration(milliseconds: 300));
     setState(() {
       _isTyping = true;
     });
@@ -135,7 +141,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         final imageBytes = await _imageFile!.readAsBytes();
         content.add(DataPart('image/jpeg', imageBytes));
       }
-      content.add(TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
+      content.add(TextPart(
+          "System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$text"));
       final response = await _chat.sendMessage(Content.multi(content));
       final aiMessage = ChatMessage(
         text: response.text ?? '...',
@@ -143,7 +150,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         timestamp: DateTime.now(),
       );
       _messages.insert(0, aiMessage);
-      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
+      _listKey.currentState
+          ?.insertItem(0, duration: const Duration(milliseconds: 300));
     } catch (e) {
       print('Error sending message: $e');
       final errorMessage = ChatMessage(
@@ -152,9 +160,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         timestamp: DateTime.now(),
       );
       _messages.insert(0, errorMessage);
-      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
+      _listKey.currentState
+          ?.insertItem(0, duration: const Duration(milliseconds: 300));
     } finally {
-       setState(() {
+      setState(() {
         _isTyping = false;
         _imageFile = null;
       });
@@ -163,9 +172,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   bool get _hasStartedChat => _messages.isNotEmpty;
 
-  Widget _buildAnimatedItem(BuildContext context, int index, Animation<double> animation) {
+  Widget _buildAnimatedItem(
+      BuildContext context, int index, Animation<double> animation) {
     final message = _messages[index];
-    
+
     final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: animation,
@@ -173,7 +183,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
     );
 
-    final slideAnimation = Tween<Offset>(begin: const Offset(0.0, 0.5), end: Offset.zero).animate(
+    final slideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.5), end: Offset.zero).animate(
       CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutBack,
@@ -212,7 +223,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             const SizedBox(width: 8),
             const Text(
               'Selene',
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
             Image.asset('assets/images/google_logo.png', height: 16.0),
@@ -246,40 +260,50 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-                title: const Text('Camera', style: TextStyle(color: Colors.white)),
+                leading:
+                    const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                title:
+                    const Text('Camera', style: TextStyle(color: Colors.white)),
                 onTap: _pickImage,
               ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
+                title: const Text('Real-time chat',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => VoiceChatScreen(apiKey: apiKey)),
+                    MaterialPageRoute(
+                        builder: (context) => VoiceChatScreen(apiKey: apiKey)),
                   );
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
-                title: const Text('Copy File', style: TextStyle(color: Colors.white)),
+                leading:
+                    const Icon(Icons.file_copy_outlined, color: Colors.white),
+                title: const Text('Copy File',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.folder_outlined, color: Colors.white),
-                title: const Text('Folder', style: TextStyle(color: Colors.white)),
+                title:
+                    const Text('Folder', style: TextStyle(color: Colors.white)),
                 onTap: () {},
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                leading:
+                    const Icon(Icons.delete_outline, color: Colors.redAccent),
+                title: const Text('Delete',
+                    style: TextStyle(color: Colors.redAccent)),
                 onTap: () {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
                         title: const Text('Delete Chat'),
-                        content: const Text('Are you sure you want to delete the current conversation?'),
+                        content: const Text(
+                            'Are you sure you want to delete the current conversation?'),
                         actions: <Widget>[
                           TextButton(
                             onPressed: () {
@@ -291,10 +315,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                             onPressed: () {
                               final int count = _messages.length;
                               for (int i = 0; i < count; i++) {
-                                _listKey.currentState?.removeItem(0, (context, animation) => _buildAnimatedItem(context, 0, animation));
+                                _listKey.currentState?.removeItem(
+                                    0,
+                                    (context, animation) => _buildAnimatedItem(
+                                        context, 0, animation));
                               }
                               _messages.clear();
-                              setState((){});
+                              setState(() {});
                               Navigator.of(context).pop();
                             },
                             child: const Text('Delete'),
@@ -307,7 +334,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
               ListTile(
                 leading: const Icon(Icons.arrow_forward, color: Colors.white),
-                title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                title: const Text('Sign Out',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () async {
                   await _googleSignIn.signOut();
                   await FirebaseAuth.instance.signOut();
@@ -344,25 +372,39 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           child: ClipRect(
                             child: AnimatedSwitcher(
                               duration: const Duration(milliseconds: 500),
-                              transitionBuilder: (Widget child, Animation<double> animation) {
-                                final isEntering = (child.key as ValueKey<int>).value == _currentPhraseIndex;
-                                
-                                final startOffset = isEntering ? const Offset(0.0, 1.0) : const Offset(0.0, 0.0);
-                                final endOffset = isEntering ? const Offset(0.0, 0.0) : const Offset(0.0, -1.0);
+                              transitionBuilder:
+                                  (Widget child, Animation<double> animation) {
+                                final inAnimation = Tween<Offset>(
+                                  begin: const Offset(
+                                      0.0, 1.0), // entra desde abajo
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(
+                                    parent: animation, curve: Curves.easeOut));
 
-                                final tween = Tween<Offset>(begin: startOffset, end: endOffset);
-                                final slideAnimation = animation.drive(tween.chain(CurveTween(curve: Curves.easeInOut)));
+                                final outAnimation = Tween<Offset>(
+                                  begin: Offset.zero,
+                                  end: const Offset(
+                                      0.0, -1.0), // sale hacia arriba
+                                ).animate(CurvedAnimation(
+                                    parent: animation, curve: Curves.easeIn));
 
-                                return SlideTransition(
-                                  position: slideAnimation,
-                                  child: child,
-                                );
+                                if (child.key ==
+                                    ValueKey<int>(_currentPhraseIndex)) {
+                                  // Texto nuevo: entra desde abajo
+                                  return SlideTransition(
+                                      position: inAnimation, child: child);
+                                } else {
+                                  // Texto viejo: sale hacia arriba
+                                  return SlideTransition(
+                                      position: outAnimation, child: child);
+                                }
                               },
                               child: Text(
                                 _phrases[_currentPhraseIndex],
                                 key: ValueKey<int>(_currentPhraseIndex),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 16, color: Colors.white70),
+                                style: const TextStyle(
+                                    fontSize: 16, color: Colors.white70),
                               ),
                             ),
                           ),

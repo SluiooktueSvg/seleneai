@@ -6,7 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'loading_screen.dart';
 
 // Create a single, top-level instance of GoogleSignIn
-final GoogleSignIn _googleSignIn = GoogleSignIn();
+final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
