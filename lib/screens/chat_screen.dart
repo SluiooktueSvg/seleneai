@@ -7,6 +7,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/chat_message.dart';
 import '../widgets/chat_message_bubble.dart';
@@ -48,6 +50,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     'Vamos a explorar nuevas ideas juntos.',
   ];
 
+  final SpeechToText _speechToText = SpeechToText();
+  final FlutterTts _flutterTts = FlutterTts();
+  bool _isListening = false;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +93,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         });
       }
     });
+
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    await _speechToText.initialize();
   }
 
   @override
@@ -153,6 +165,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.insert(0, aiMessage);
       _listKey.currentState
           ?.insertItem(0, duration: const Duration(milliseconds: 300));
+      if (response.text != null) {
+        _speak(response.text!);
+      }
     } catch (e) {
       print('Error sending message: $e');
       final errorMessage = ChatMessage(
@@ -169,6 +184,31 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         _imageFile = null;
       });
     }
+  }
+
+  void _startListening() async {
+    if (!_isListening) {
+      bool available = await _speechToText.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speechToText.listen(
+          onResult: (result) => setState(() {
+            _textController.text = result.recognizedWords;
+          }),
+        );
+      }
+    }
+  }
+
+  void _stopListening() async {
+    if (_isListening) {
+      await _speechToText.stop();
+      setState(() => _isListening = false);
+    }
+  }
+
+  void _speak(String text) async {
+    await _flutterTts.speak(text);
   }
 
   bool get _hasStartedChat => _messages.isNotEmpty;
@@ -202,6 +242,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             key: ObjectKey(message),
             message: message,
             userPhotoUrl: user?.photoURL,
+            onSpeak: (text) => _speak(text),
           ),
         ),
       ),
@@ -367,11 +408,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                             );
                           },
                         ),
-                        const SizedBox(height: 5), //cambio de espacios entre el input, saludo, y frases
-
-                        // 👇 Aquí estaba tu AnimatedSwitcher, ahora va esto:
+                        const SizedBox(height: 3),
                         const AnimatedPhraseCarousel(),
-                       
                         const SizedBox(height: 15),
                         _buildTextComposer(),
                       ],
@@ -422,11 +460,14 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onSubmitted: (value) => _handleSendMessage(),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.mic, color: Colors.white54),
-              onPressed: () {
-                // Handle voice input
-              },
+            GestureDetector(
+              onTapDown: (_) => _startListening(),
+              onTapUp: (_) => _stopListening(),
+              onLongPressEnd: (_) => _stopListening(),
+              child: Icon(
+                _isListening ? Icons.mic : Icons.mic_none,
+                color: Colors.white54,
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.send, color: Colors.white54),

@@ -13,11 +13,13 @@ class ChatMessageBubble extends StatelessWidget {
     required this.message,
     this.userPhotoUrl,
     this.isTyping = false,
+    this.onSpeak,
   });
 
   final ChatMessage message;
   final String? userPhotoUrl;
   final bool isTyping;
+  final Function(String)? onSpeak;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +83,10 @@ class ChatMessageBubble extends StatelessWidget {
                 style: TextStyle(color: Colors.greenAccent, fontSize: 12),
               ),
               const SizedBox(width: 6),
-              const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+              GestureDetector(
+                onTap: () => onSpeak?.call(message.text),
+                child: const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
+              ),
             ]
           ],
         ),

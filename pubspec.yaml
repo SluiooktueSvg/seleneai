@@ -17,7 +17,7 @@ dependencies:
   google_generative_ai: ^0.2.2
   intl: ^0.17.0
   speech_to_text: ^7.3.0
-  flutter_tts: ^3.6.3
+  flutter_tts: ^4.2.3
   flutter_dotenv: ^6.0.0
   image_picker: ^1.2.0
 
