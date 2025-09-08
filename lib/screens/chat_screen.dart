@@ -348,7 +348,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       },
     );
 
-    Overlay.of(context).insert(_overlayEntry!)
+    Overlay.of(context).insert(_overlayEntry!);
     setState(() {
       _isMenuOpen = true;
     });
