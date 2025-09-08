@@ -70,6 +70,16 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _animationController.dispose();
     super.dispose();
   }
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Buenos días';
+    } else if (hour < 19) {
+      return 'Buenas tardes';
+    } else {
+      return 'Buenas noches';
+    }
+  }
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -298,7 +308,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           animation: _colorAnimation,
                           builder: (context, child) {
                             return Text(
-                              'Buenos días, $firstName',
+                              '${_getGreeting()}, $firstName',
                               style: TextStyle(
                                 fontSize: 28,
                                 color: _colorAnimation.value,
