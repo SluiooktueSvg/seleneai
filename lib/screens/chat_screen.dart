@@ -12,6 +12,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/chat_message.dart';
 import '../widgets/chat_message_bubble.dart';
+import '../widgets/typewriter_hint_text.dart';
 import 'voice_chat_screen.dart';
 import '../widgets/animated_phrase_carousel.dart';
 
@@ -452,12 +453,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               child: TextField(
                 controller: _textController,
                 style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.symmetric(horizontal: 20.0),
-                  hintText: 'Explore',
-                  hintStyle: TextStyle(color: Colors.white54),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  hintText: null,
+                  hintStyle: const TextStyle(color: Colors.white54),
                   border: InputBorder.none,
+                  hint: _textController.text.isEmpty
+                      ? const TypewriterHintText(
+                          phrases: [
+                            '¿Cuál es el sentido de la vida?',
+                            '¿Qué es un agujero negro?',
+                            'Escribe un poema sobre el amor.',
+                            '¿Cuál es la capital de Mongolia?',
+                          ],
+                        )
+                      : null,
                 ),
+                onChanged: (text) {
+                  setState(() {});
+                },
                 onSubmitted: (value) => _handleSendMessage(isVoiceInput: false),
               ),
             ),
