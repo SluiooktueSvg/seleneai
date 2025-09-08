@@ -55,10 +55,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isListening = false;
 
+  // For custom menu
+  final GlobalKey _menuKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+  bool _isMenuOpen = false;
+
   @override
   void initState() {
     super.initState();
-    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController =
@@ -106,6 +111,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _phraseTimer.cancel();
+    _closeMenu(); // Close menu if it's open when the screen is disposed
     super.dispose();
   }
 
@@ -213,6 +219,150 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     await _flutterTts.speak(text);
   }
 
+  void _toggleMenu() {
+    if (_isMenuOpen) {
+      _closeMenu();
+    } else {
+      _openMenu();
+    }
+  }
+
+  void _openMenu() {
+    final renderBox = _menuKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeMenu,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            Positioned(
+              top: offset.dy + size.height,
+              left: offset.dx - 200 + size.width,
+              width: 240,
+              child: Material(
+                color: const Color(0xFF1E1E1E),
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+                      title: const Text('Camera', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeMenu();
+                        _pickImage();
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.graphic_eq, color: Colors.white),
+                      title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeMenu();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VoiceChatScreen(apiKey: widget.apiKey),
+                          ),
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
+                      title: const Text('Copy File', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeMenu();
+                        // Add copy file functionality here
+                      },
+                    ),
+                     ListTile(
+                      leading: const Icon(Icons.folder_outlined, color: Colors.white),
+                      title: const Text('Folder', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeMenu();
+                        // Add folder functionality here
+                      },
+                    ),
+                    const Divider(color: Colors.white24, height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                      title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                      onTap: () {
+                        _closeMenu();
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Delete Chat'),
+                              content: const Text(
+                                  'Are you sure you want to delete the current conversation?'),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    final int count = _messages.length;
+                                    for (int i = 0; i < count; i++) {
+                                      _listKey.currentState?.removeItem(0,
+                                          (context, animation) =>
+                                              _buildAnimatedItem(context, 0, animation));
+                                    }
+                                    _messages.clear();
+                                    setState(() {});
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.arrow_forward, color: Colors.white),
+                      title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeMenu();
+                        _googleSignIn.signOut();
+                        FirebaseAuth.instance.signOut();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!)
+    setState(() {
+      _isMenuOpen = true;
+    });
+  }
+
+  void _closeMenu() {
+    if (_isMenuOpen) {
+      _overlayEntry?.remove();
+      setState(() {
+        _isMenuOpen = false;
+      });
+    }
+  }
+
   bool get _hasStartedChat => _messages.isNotEmpty;
 
   Widget _buildAnimatedItem(
@@ -254,7 +404,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
-    final apiKey = dotenv.env['GEMINI_API_KEY']!;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0C0C0C),
@@ -279,117 +428,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ),
         centerTitle: true,
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
-            ),
+          IconButton(
+            key: _menuKey,
+            icon: const Icon(Icons.menu, color: Colors.white),
+            onPressed: _toggleMenu,
           ),
         ],
-      ),
-      endDrawer: Drawer(
-        child: Container(
-          color: const Color(0xFF1E1E1E),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              const DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Color(0xFF0C0C0C),
-                ),
-                child: Text(
-                  'Options',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                  ),
-                ),
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.camera_alt_outlined, color: Colors.white),
-                title:
-                    const Text('Camera', style: TextStyle(color: Colors.white)),
-                onTap: _pickImage,
-              ),
-              ListTile(
-                leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                title: const Text('Real-time chat',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => VoiceChatScreen(apiKey: apiKey)),
-                  );
-                },
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.file_copy_outlined, color: Colors.white),
-                title: const Text('Copy File',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: const Icon(Icons.folder_outlined, color: Colors.white),
-                title:
-                    const Text('Folder', style: TextStyle(color: Colors.white)),
-                onTap: () {},
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.delete_outline, color: Colors.redAccent),
-                title: const Text('Delete',
-                    style: TextStyle(color: Colors.redAccent)),
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: const Text('Delete Chat'),
-                        content: const Text(
-                            'Are you sure you want to delete the current conversation?'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              final int count = _messages.length;
-                              for (int i = 0; i < count; i++) {
-                                _listKey.currentState?.removeItem(
-                                    0,
-                                    (context, animation) => _buildAnimatedItem(
-                                        context, 0, animation));
-                              }
-                              _messages.clear();
-                              setState(() {});
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.arrow_forward, color: Colors.white),
-                title: const Text('Sign Out',
-                    style: TextStyle(color: Colors.white)),
-                onTap: () async {
-                  await _googleSignIn.signOut();
-                  await FirebaseAuth.instance.signOut();
-                },
-              ),
-            ],
-          ),
-        ),
       ),
       body: Column(
         children: [
