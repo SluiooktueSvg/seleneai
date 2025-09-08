@@ -12,7 +12,7 @@ import '../models/chat_message.dart';
 import '../widgets/chat_message_bubble.dart';
 import 'voice_chat_screen.dart';
 
-final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+final GoogleSignIn _googleSignIn = GoogleSignIn();
 
 class ChatScreen extends StatefulWidget {
   final String apiKey;
@@ -388,15 +388,32 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                 ).animate(CurvedAnimation(
                                     parent: animation, curve: Curves.easeIn));
 
+                                final fadeIn =
+                                    Tween<double>(begin: 0.0, end: 1.0).animate(
+                                        CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeIn));
+                                final fadeOut =
+                                    Tween<double>(begin: 1.0, end: 0.0).animate(
+                                        CurvedAnimation(
+                                            parent: animation,
+                                            curve: Curves.easeOut));
+
                                 if (child.key ==
                                     ValueKey<int>(_currentPhraseIndex)) {
-                                  // Texto nuevo: entra desde abajo
+                                  // Texto nuevo: entra desde abajo y aparece
                                   return SlideTransition(
-                                      position: inAnimation, child: child);
+                                    position: inAnimation,
+                                    child: FadeTransition(
+                                        opacity: fadeIn, child: child),
+                                  );
                                 } else {
-                                  // Texto viejo: sale hacia arriba
+                                  // Texto viejo: sube hacia arriba y desaparece
                                   return SlideTransition(
-                                      position: outAnimation, child: child);
+                                    position: outAnimation,
+                                    child: FadeTransition(
+                                        opacity: fadeOut, child: child),
+                                  );
                                 }
                               },
                               child: Text(
