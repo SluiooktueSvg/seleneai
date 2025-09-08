@@ -257,8 +257,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final apiKey = dotenv.env['GEMINI_API_KEY']!;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0C0C0C), // 👈 agrégalo aquí
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF0C0C0C),
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
