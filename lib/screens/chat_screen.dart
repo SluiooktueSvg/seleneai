@@ -258,7 +258,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF1E1E1E),
         elevation: 0,
         title: Row(
           mainAxisSize: MainAxisSize.min,
