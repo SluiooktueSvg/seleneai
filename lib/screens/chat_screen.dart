@@ -63,7 +63,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _model = GenerativeModel(model: 'gemini-pro', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _chat = _model.startChat();
 
     _animationController =
@@ -147,6 +147,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     );
     final text = _textController.text;
     _textController.clear();
+
+    // This will trigger the UI to change the AppBar
+    if (_messages.isEmpty) {
+      setState(() {});
+    }
 
     _messages.insert(0, userMessage);
     _listKey.currentState
@@ -401,40 +406,89 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     );
   }
 
+  PreferredSizeWidget _buildInitialAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFF0C0C0C),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        onPressed: () {},
+      ),
+      title: TextButton.icon(
+        onPressed: () {},
+        style: TextButton.styleFrom(
+          backgroundColor: const Color(0xFF3A416F),
+          shape: const StadiumBorder(),
+        ),
+        icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+        label: const Text(
+          'Obtener Plus',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          key: _menuKey,
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleMenu,
+        ),
+      ],
+    );
+  }
+
+  PreferredSizeWidget _buildConversationAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFF0C0C0C),
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.menu, color: Colors.white),
+        onPressed: () {
+          // Eventually, this will open the drawer with the chat history
+        },
+      ),
+      title: const Text('Selene'),
+      actions: [
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            // Handle conversation menu selection
+            print('Selected: $value');
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            const PopupMenuItem<String>(
+              value: 'share',
+              child: Text('Compartir'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'rename',
+              child: Text('Cambiar nombre'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'archive',
+              child: Text('Archivar'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'delete',
+              child: Text('Eliminar'),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'report',
+              child: Text('Informar'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0C0C0C),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0C0C0C),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-          onPressed: () {},
-        ),
-        title: TextButton.icon(
-          onPressed: () {},
-          style: TextButton.styleFrom(
-            backgroundColor: const Color(0xFF3A416F),
-            shape: const StadiumBorder(),
-          ),
-          icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
-          label: const Text(
-            'Obtener Plus',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            key: _menuKey,
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: _toggleMenu,
-          ),
-        ],
-      ),
+      appBar: _messages.isEmpty ? _buildInitialAppBar() : _buildConversationAppBar(),
       body: Column(
         children: [
           Expanded(
