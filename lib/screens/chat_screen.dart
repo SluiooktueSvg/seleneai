@@ -331,7 +331,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                             return Text(
                               '${_getGreeting()}, $firstName',
                               style: TextStyle(
-                                fontSize: 34,
+                                fontSize: 32,
                                 fontWeight: FontWeight.bold,
                                 color: _colorAnimation.value,
                               ),
@@ -339,29 +339,32 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           },
                         ),
                         const SizedBox(height: 8),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (Widget child, Animation<double> animation) {
-                            final isEntering = (child.key as ValueKey<int>).value == _currentPhraseIndex;
+                        SizedBox(
+                          height: 40, // Increased height to prevent overflow
+                          child: ClipRect(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              transitionBuilder: (Widget child, Animation<double> animation) {
+                                final isEntering = (child.key as ValueKey<int>).value == _currentPhraseIndex;
+                                
+                                final startOffset = isEntering ? const Offset(0.0, 1.0) : const Offset(0.0, 0.0);
+                                final endOffset = isEntering ? const Offset(0.0, 0.0) : const Offset(0.0, -1.0);
 
-                            final startOffset = isEntering ? const Offset(0.0, 1.0) : const Offset(0.0, 0.0);
-                            final endOffset = isEntering ? const Offset(0.0, 0.0) : const Offset(0.0, -1.0);
+                                final tween = Tween<Offset>(begin: startOffset, end: endOffset);
+                                final slideAnimation = animation.drive(tween.chain(CurveTween(curve: Curves.easeInOut)));
 
-                            final tween = Tween<Offset>(begin: startOffset, end: endOffset);
-                            final slideAnimation = animation.drive(tween.chain(CurveTween(curve: Curves.easeInOut)));
-
-                            return ClipRect(
-                              child: SlideTransition(
-                                position: slideAnimation,
-                                child: child,
+                                return SlideTransition(
+                                  position: slideAnimation,
+                                  child: child,
+                                );
+                              },
+                              child: Text(
+                                _phrases[_currentPhraseIndex],
+                                key: ValueKey<int>(_currentPhraseIndex),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 16, color: Colors.white70),
                               ),
-                            );
-                          },
-                          child: Text(
-                            _phrases[_currentPhraseIndex],
-                            key: ValueKey<int>(_currentPhraseIndex),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 16, color: Colors.white70),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
