@@ -26,7 +26,7 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> {
   void initState() {
     super.initState();
     // Use the apiKey from the widget
-    _model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: widget.apiKey);
+    _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: widget.apiKey);
     _initSpeech();
     _initTts();
   }

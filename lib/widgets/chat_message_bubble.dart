@@ -59,7 +59,7 @@ class ChatMessageBubble extends StatelessWidget {
 
   Widget _buildMessageContent(String timeString, BuildContext context) {
     return Column(
-      crossAxisAlignment: message.isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (message.imageUrl != null)
           Image.file(File(message.imageUrl!)),
@@ -80,7 +80,7 @@ class ChatMessageBubble extends StatelessWidget {
                 style: TextStyle(color: Colors.greenAccent, fontSize: 12),
               ),
               const SizedBox(width: 6),
-              const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
+              const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 14),
             ]
           ],
         ),
