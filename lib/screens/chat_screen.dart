@@ -252,7 +252,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
             Positioned(
               top: offset.dy + size.height,
-              left: offset.dx,
+              left: offset.dx - 200 + size.width,
               width: 240,
               child: Material(
                 color: const Color(0xFF1E1E1E),
@@ -471,9 +471,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFF0C0C0C),
       elevation: 0,
       leading: IconButton(
-        key: _historyMenuKey,
-        icon: const Icon(Icons.menu, color: Colors.white),
-        onPressed: _toggleHistoryMenu,
+        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+        onPressed: () {},
       ),
       title: TextButton.icon(
         onPressed: () {},
@@ -490,8 +489,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-          onPressed: () {},
+          key: _historyMenuKey,
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: _toggleHistoryMenu,
         ),
       ],
     );
