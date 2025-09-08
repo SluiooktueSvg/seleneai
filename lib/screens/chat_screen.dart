@@ -257,30 +257,31 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final apiKey = dotenv.env['GEMINI_API_KEY']!;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0C0C), // 👈 agrégalo aquí
+      backgroundColor: const Color(0xFF0C0C0C),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0C0C0C),
         elevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.bubble_chart, color: Colors.white),
-            const SizedBox(width: 8),
-            const Text(
-              'Selene',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 16),
-            Image.asset('assets/images/google_logo.png', height: 16.0),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          onPressed: () {},
         ),
+        title: TextButton.icon(
+          onPressed: () {},
+          style: TextButton.styleFrom(
+            backgroundColor: const Color(0xFF3A416F),
+            shape: const StadiumBorder(),
+          ),
+          icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+          label: const Text(
+            'Obtener Plus',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+        centerTitle: true,
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
+              icon: const Icon(Icons.menu, color: Colors.white),
               onPressed: () => Scaffold.of(context).openEndDrawer(),
             ),
           ),
@@ -288,7 +289,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
       endDrawer: Drawer(
         child: Container(
-          color: const Color(0xFF0C0C0C),
+          color: const Color(0xFF1E1E1E),
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
