@@ -27,6 +27,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
@@ -261,17 +262,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const ListTile(
-                      title: Text('Historial de chats (Próximamente)', style: TextStyle(color: Colors.white54)),
-                    ),
-                    const Divider(color: Colors.white24, height: 1),
                     ListTile(
-                      leading: const Icon(Icons.arrow_forward, color: Colors.white),
-                      title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.graphic_eq, color: Colors.white),
+                      title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeHistoryMenu();
-                        _googleSignIn.signOut();
-                        FirebaseAuth.instance.signOut();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VoiceChatScreen(apiKey: widget.apiKey),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -504,7 +505,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () {
-            // Eventually, this will open the drawer with the chat history
+            _scaffoldKey.currentState?.openDrawer();
           },
         ),
         title: const Text('Selene'),
@@ -517,13 +518,64 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ]);
   }
 
+  Widget _buildAppDrawer() {
+    return Drawer(
+      backgroundColor: const Color(0xFF0C0C0C),
+      child: Column(
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              color: Color(0xFF1E1E1E),
+            ),
+            child: Text(
+              'Conversaciones',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
+          ),
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Aquí se mostrarán tus chats guardados.',
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+          ),
+          const Divider(color: Colors.white24),
+          ListTile(
+            leading: CircleAvatar(
+              backgroundImage: user?.photoURL != null
+                  ? NetworkImage(user!.photoURL!)
+                  : null,
+              child: user?.photoURL == null
+                  ? const Icon(Icons.person)
+                  : null,
+            ),
+            title: Text(user?.displayName ?? 'Usuario', style: const TextStyle(color: Colors.white)),
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.white),
+            title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+            onTap: () {
+              Navigator.of(context).pop(); // Close the drawer
+              _googleSignIn.signOut();
+              FirebaseAuth.instance.signOut();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     String? firstName = user?.displayName?.split(' ').first ?? 'amigo';
 
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFF0C0C0C),
       appBar: _messages.isEmpty ? _buildInitialAppBar() : _buildConversationAppBar(),
+      drawer: _buildAppDrawer(),
       body: Column(
         children: [
           Expanded(
