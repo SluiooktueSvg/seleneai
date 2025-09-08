@@ -131,6 +131,31 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _startNewChat() {
+    // Close the drawer
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.of(context).pop();
+    }
+
+    // Clear all messages from the list and the animated list
+    final int count = _messages.length;
+    for (int i = 0; i < count; i++) {
+      _listKey.currentState?.removeItem(
+        0, 
+        (context, animation) => _buildAnimatedItem(context, 0, animation, _messages[0]),
+        duration: const Duration(milliseconds: 200)
+      );
+    }
+    _messages.clear();
+
+    // Reset any other relevant state
+    _chat = _model.startChat();
+    _imageFile = null;
+
+    // Trigger a rebuild to go back to the initial screen
+    setState(() {});
+  }
+
   Future<void> _pickImage() async {
     final pickedFile =
         await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -382,7 +407,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                     for (int i = 0; i < count; i++) {
                                       _listKey.currentState?.removeItem(0,
                                           (context, animation) =>
-                                              _buildAnimatedItem(context, 0, animation));
+                                              _buildAnimatedItem(context, 0, animation, _messages[0]));
                                     }
                                     _messages.clear();
                                     setState(() {});
@@ -432,8 +457,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   bool get _hasStartedChat => _messages.isNotEmpty;
 
   Widget _buildAnimatedItem(
-      BuildContext context, int index, Animation<double> animation) {
-    final message = _messages[index];
+      BuildContext context, int index, Animation<double> animation, ChatMessage message) {
 
     final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
@@ -521,47 +545,106 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   Widget _buildAppDrawer() {
     return Drawer(
       backgroundColor: const Color(0xFF0C0C0C),
-      child: Column(
-        children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Color(0xFF1E1E1E),
-            ),
-            child: Text(
-              'Conversaciones',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Aquí se mostrarán tus chats guardados.',
-                style: TextStyle(color: Colors.white54),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(24.0),
+                      ),
+                      child: const TextField(
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          icon: Icon(Icons.search, color: Colors.white54),
+                          hintText: 'Buscar',
+                          hintStyle: TextStyle(color: Colors.white54),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                    onPressed: _startNewChat,
+                  ),
+                ],
               ),
             ),
-          ),
-          const Divider(color: Colors.white24),
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: user?.photoURL != null
-                  ? NetworkImage(user!.photoURL!)
-                  : null,
-              child: user?.photoURL == null
-                  ? const Icon(Icons.person)
-                  : null,
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+              title: const Text('Nuevo chat', style: TextStyle(color: Colors.white)),
+              onTap: _startNewChat,
             ),
-            title: Text(user?.displayName ?? 'Usuario', style: const TextStyle(color: Colors.white)),
-          ),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.white),
-            title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
-            onTap: () {
-              Navigator.of(context).pop(); // Close the drawer
-              _googleSignIn.signOut();
-              FirebaseAuth.instance.signOut();
-            },
-          ),
-        ],
+            ListTile(
+              leading: const Icon(Icons.collections_bookmark_outlined, color: Colors.white),
+              title: const Text('Biblioteca', style: TextStyle(color: Colors.white)),
+              onTap: () { /* No action yet */ },
+            ),
+            ListTile(
+              leading: const Icon(Icons.apps_outlined, color: Colors.white),
+              title: const Text('GPT', style: TextStyle(color: Colors.white)),
+              onTap: () { /* No action yet */ },
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_open_outlined, color: Colors.white),
+              title: Row(
+                children: [
+                  const Text('Proyectos', style: TextStyle(color: Colors.white)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3A416F),
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    child: const Text(
+                      'NUEVO',
+                      style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              onTap: () { /* No action yet */ },
+            ),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'Aquí se mostrará tu historial de chats.',
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ),
+            ),
+            const Divider(color: Colors.white24),
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: user?.photoURL != null
+                    ? NetworkImage(user!.photoURL!)
+                    : null,
+                child: user?.photoURL == null
+                    ? const Icon(Icons.person)
+                    : null,
+              ),
+              title: Text(user?.displayName ?? 'Usuario', style: const TextStyle(color: Colors.white)),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.white),
+              title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+              onTap: () {
+                Navigator.of(context).pop(); // Close the drawer
+                _googleSignIn.signOut();
+                FirebaseAuth.instance.signOut();
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -609,7 +692,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     reverse: true,
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     initialItemCount: _messages.length,
-                    itemBuilder: _buildAnimatedItem,
+                    itemBuilder: (context, index, animation) {
+                       final message = _messages[index];
+                       return _buildAnimatedItem(context, index, animation, message);
+                    },
                   ),
           ),
           if (_hasStartedChat) _buildTextComposer(),
