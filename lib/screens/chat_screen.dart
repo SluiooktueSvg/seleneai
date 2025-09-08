@@ -37,6 +37,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   late final AnimationController _animationController;
   late final Animation<Color?> _colorAnimation;
 
+  // For animated phrases
+  late final Timer _phraseTimer;
+  int _currentPhraseIndex = 0;
+  final List<String> _phrases = [
+    '¿En qué puedo ayudarte a pensar o resolver?',
+    '¿Listo para crear algo increíble?',
+    'Pregúntame lo que sea.',
+    '¿Cómo puedo potenciar tu día?',
+    'Vamos a explorar nuevas ideas juntos.',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -63,13 +74,23 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
     ]).animate(_animationController);
     _animationController.repeat(reverse: true);
+
+    _phraseTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentPhraseIndex = (_currentPhraseIndex + 1) % _phrases.length;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _phraseTimer.cancel();
     super.dispose();
   }
+
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
@@ -310,16 +331,38 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                             return Text(
                               '${_getGreeting()}, $firstName',
                               style: TextStyle(
-                                fontSize: 28,
+                                fontSize: 34,
+                                fontWeight: FontWeight.bold,
                                 color: _colorAnimation.value,
                               ),
                             );
                           },
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          '¿En qué puedo ayudarte a pensar o resolver?',
-                          style: TextStyle(fontSize: 16, color: Colors.white70),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          transitionBuilder: (Widget child, Animation<double> animation) {
+                            final isEntering = (child.key as ValueKey<int>).value == _currentPhraseIndex;
+
+                            final startOffset = isEntering ? const Offset(0.0, 1.0) : const Offset(0.0, 0.0);
+                            final endOffset = isEntering ? const Offset(0.0, 0.0) : const Offset(0.0, -1.0);
+
+                            final tween = Tween<Offset>(begin: startOffset, end: endOffset);
+                            final slideAnimation = animation.drive(tween.chain(CurveTween(curve: Curves.easeInOut)));
+
+                            return ClipRect(
+                              child: SlideTransition(
+                                position: slideAnimation,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Text(
+                            _phrases[_currentPhraseIndex],
+                            key: ValueKey<int>(_currentPhraseIndex),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 16, color: Colors.white70),
+                          ),
                         ),
                         const SizedBox(height: 20),
                         _buildTextComposer(),
