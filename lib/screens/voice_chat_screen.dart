@@ -59,6 +59,10 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> with TickerProviderSt
         _startListening(); // Listen for the next user input after AI finishes speaking
       }
     });
+    // Start listening as soon as the screen is ready
+    if (mounted) {
+      _startListening();
+    }
   }
 
   void _startListening() {
@@ -86,6 +90,12 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> with TickerProviderSt
   }
 
   void _startConversation() {
+    // Stop any initial listening if it's active
+    if (_isListening) {
+      _speechToText.stop();
+      setState(() => _isListening = false);
+    }
+    
     setState(() {
       _conversationStarted = true;
       _spokenText = 'Hola, ¿en qué puedo ayudarte?'; // Initial prompt
@@ -182,8 +192,8 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> with TickerProviderSt
 
   Widget _buildStatusText() {
     String statusText;
-    if (!_conversationStarted) {
-      statusText = "Di 'Hola' para empezar";
+    if (!_conversationStarted && !_isListening) {
+      statusText = "Toca el micro o di 'Hola'";
     } else if (_isListening) {
       statusText = 'Escuchando...';
     } else if (_isProcessing) {
@@ -198,7 +208,13 @@ class _VoiceChatScreenState extends State<VoiceChatScreen> with TickerProviderSt
 
   Widget _buildMicrophone() {
     return GestureDetector(
-      onTap: _conversationStarted ? _startListening : null,
+      onTap: () {
+        if (!_conversationStarted) {
+          _startConversation();
+        } else {
+          _startListening();
+        }
+      },
       child: AnimatedBuilder(
         animation: _animationController,
         builder: (context, child) {
