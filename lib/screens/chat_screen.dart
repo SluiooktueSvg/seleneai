@@ -288,7 +288,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
       endDrawer: Drawer(
         child: Container(
-          color: const Color(0xFF1E1E1E),
+          color: const Color(0xFF0C0C0C),
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
