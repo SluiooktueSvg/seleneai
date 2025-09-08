@@ -129,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _handleSendMessage() async {
+  Future<void> _handleSendMessage({bool isVoiceInput = false}) async {
     if (_textController.text.isEmpty && _imageFile == null) return;
 
     final userMessage = ChatMessage(
@@ -165,7 +165,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.insert(0, aiMessage);
       _listKey.currentState
           ?.insertItem(0, duration: const Duration(milliseconds: 300));
-      if (response.text != null) {
+      if (isVoiceInput && response.text != null) {
         _speak(response.text!);
       }
     } catch (e) {
@@ -204,6 +204,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     if (_isListening) {
       await _speechToText.stop();
       setState(() => _isListening = false);
+      _handleSendMessage(isVoiceInput: true);
     }
   }
 
@@ -457,7 +458,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
                 ),
-                onSubmitted: (value) => _handleSendMessage(),
+                onSubmitted: (value) => _handleSendMessage(isVoiceInput: false),
               ),
             ),
             GestureDetector(
@@ -471,7 +472,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             ),
             IconButton(
               icon: const Icon(Icons.send, color: Colors.white54),
-              onPressed: _handleSendMessage,
+              onPressed: () => _handleSendMessage(isVoiceInput: false),
             ),
           ],
         ),
