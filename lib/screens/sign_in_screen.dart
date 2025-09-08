@@ -3,13 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import '../widgets/rgb_loader.dart';
+
 // Create a single, top-level instance of GoogleSignIn
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-class SignInScreen extends StatelessWidget {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
 
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  bool _isLoading = false;
+
   Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
@@ -28,6 +40,12 @@ class SignInScreen extends StatelessWidget {
     } catch (e) {
       print("Something went wrong with Google Sign-In");
       print(e);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -64,18 +82,21 @@ class SignInScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: _signInWithGoogle,
-              icon: Image.asset('assets/images/google_logo.png', height: 24.0),
-              label: const Text('Sign In with Google'),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black, backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+            if (_isLoading)
+              const RgbLoader()
+            else
+              ElevatedButton.icon(
+                onPressed: _signInWithGoogle,
+                icon: Image.asset('assets/images/google_logo.png', height: 24.0),
+                label: const Text('Sign In with Google'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.black, backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
-            ),
           ],
         ),
       ),

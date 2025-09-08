@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../models/chat_message.dart';
+import 'rgb_loader.dart';
 
 class ChatMessageBubble extends StatelessWidget {
   const ChatMessageBubble({
@@ -92,10 +93,7 @@ class ChatMessageBubble extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Thinking...',
-          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        const RgbLoader(),
         const SizedBox(height: 5),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -106,21 +104,10 @@ class ChatMessageBubble extends StatelessWidget {
               style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
             const SizedBox(width: 10),
-            const SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white54,
-              ),
-            ),
-            const SizedBox(width: 10),
             const Text(
               'Analyzing...',
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.volume_up_outlined, color: Colors.white54, size: 16),
           ],
         ),
       ],

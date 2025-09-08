@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'screens/sign_in_screen.dart';
 import 'screens/chat_screen.dart';
+import 'screens/loading_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -29,11 +30,7 @@ class AuthWrapper extends StatelessWidget {
           }
           return const SignInScreen();
         }
-        return const Scaffold(
-          body: Center(
-            child: CircularProgressIndicator(),
-          ),
-        );
+        return const LoadingScreen();
       },
     );
   }
