@@ -55,10 +55,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isListening = false;
 
-  // For custom menu
-  final GlobalKey _menuKey = GlobalKey();
-  OverlayEntry? _overlayEntry;
-  bool _isMenuOpen = false;
+  // For custom menus
+  final GlobalKey _historyMenuKey = GlobalKey();
+  final GlobalKey _conversationMenuKey = GlobalKey();
+  OverlayEntry? _historyOverlayEntry;
+  OverlayEntry? _conversationOverlayEntry;
+  bool _isHistoryMenuOpen = false;
+  bool _isConversationMenuOpen = false;
 
   @override
   void initState() {
@@ -111,7 +114,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _phraseTimer.cancel();
-    _closeMenu(); // Close menu if it's open when the screen is disposed
+    _closeHistoryMenu(); 
+    _closeConversationMenu();
     super.dispose();
   }
 
@@ -148,7 +152,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     final text = _textController.text;
     _textController.clear();
 
-    // This will trigger the UI to change the AppBar
     if (_messages.isEmpty) {
       setState(() {});
     }
@@ -224,26 +227,97 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     await _flutterTts.speak(text);
   }
 
-  void _toggleMenu() {
-    if (_isMenuOpen) {
-      _closeMenu();
+  void _toggleHistoryMenu() {
+    if (_isHistoryMenuOpen) {
+      _closeHistoryMenu();
     } else {
-      _openMenu();
+      _openHistoryMenu();
     }
   }
 
-  void _openMenu() {
-    final renderBox = _menuKey.currentContext!.findRenderObject() as RenderBox;
+  void _openHistoryMenu() {
+    final renderBox = _historyMenuKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
-    _overlayEntry = OverlayEntry(
+    _historyOverlayEntry = OverlayEntry(
       builder: (context) {
         return Stack(
           children: [
             Positioned.fill(
               child: GestureDetector(
-                onTap: _closeMenu,
+                onTap: _closeHistoryMenu,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            Positioned(
+              top: offset.dy + size.height,
+              left: offset.dx,
+              width: 240,
+              child: Material(
+                color: const Color(0xFF1E1E1E),
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const ListTile(
+                      title: Text('Historial de chats (Próximamente)', style: TextStyle(color: Colors.white54)),
+                    ),
+                    const Divider(color: Colors.white24, height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.arrow_forward, color: Colors.white),
+                      title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                      onTap: () {
+                        _closeHistoryMenu();
+                        _googleSignIn.signOut();
+                        FirebaseAuth.instance.signOut();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_historyOverlayEntry!);
+    setState(() {
+      _isHistoryMenuOpen = true;
+    });
+  }
+
+  void _closeHistoryMenu() {
+    if (_isHistoryMenuOpen) {
+      _historyOverlayEntry?.remove();
+      setState(() {
+        _isHistoryMenuOpen = false;
+      });
+    }
+  }
+
+  void _toggleConversationMenu() {
+    if (_isConversationMenuOpen) {
+      _closeConversationMenu();
+    } else {
+      _openConversationMenu();
+    }
+  }
+
+  void _openConversationMenu() {
+    final renderBox = _conversationMenuKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+
+    _conversationOverlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _closeConversationMenu,
                 child: Container(color: Colors.transparent),
               ),
             ),
@@ -259,61 +333,47 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.camera_alt_outlined, color: Colors.white),
-                      title: const Text('Camera', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.share_outlined, color: Colors.white),
+                      title: const Text('Compartir', style: TextStyle(color: Colors.white)),
                       onTap: () {
-                        _closeMenu();
-                        _pickImage();
+                        _closeConversationMenu();
+                        print('Compartir Tapped');
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                      title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.edit_outlined, color: Colors.white),
+                      title: const Text('Cambiar nombre', style: TextStyle(color: Colors.white)),
                       onTap: () {
-                        _closeMenu();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => VoiceChatScreen(apiKey: widget.apiKey),
-                          ),
-                        );
+                        _closeConversationMenu();
+                        print('Cambiar nombre Tapped');
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.file_copy_outlined, color: Colors.white),
-                      title: const Text('Copy File', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.archive_outlined, color: Colors.white),
+                      title: const Text('Archivar', style: TextStyle(color: Colors.white)),
                       onTap: () {
-                        _closeMenu();
-                        // Add copy file functionality here
+                        _closeConversationMenu();
+                        print('Archivar Tapped');
                       },
                     ),
-                     ListTile(
-                      leading: const Icon(Icons.folder_outlined, color: Colors.white),
-                      title: const Text('Folder', style: TextStyle(color: Colors.white)),
-                      onTap: () {
-                        _closeMenu();
-                        // Add folder functionality here
-                      },
-                    ),
-                    const Divider(color: Colors.white24, height: 1),
                     ListTile(
                       leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                      title: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                      title: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
                       onTap: () {
-                        _closeMenu();
+                        _closeConversationMenu();
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: const Text('Delete Chat'),
+                              title: const Text('Eliminar Chat'),
                               content: const Text(
-                                  'Are you sure you want to delete the current conversation?'),
+                                  '¿Estás seguro de que quieres eliminar la conversación actual?'),
                               actions: <Widget>[
                                 TextButton(
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
-                                  child: const Text('Cancel'),
+                                  child: const Text('Cancelar'),
                                 ),
                                 TextButton(
                                   onPressed: () {
@@ -327,7 +387,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                     setState(() {});
                                     Navigator.of(context).pop();
                                   },
-                                  child: const Text('Delete'),
+                                  child: const Text('Eliminar'),
                                 ),
                               ],
                             );
@@ -335,13 +395,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                         );
                       },
                     ),
+                    const Divider(color: Colors.white24, height: 1),
                     ListTile(
-                      leading: const Icon(Icons.arrow_forward, color: Colors.white),
-                      title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.flag_outlined, color: Colors.white),
+                      title: const Text('Informar', style: TextStyle(color: Colors.white)),
                       onTap: () {
-                        _closeMenu();
-                        _googleSignIn.signOut();
-                        FirebaseAuth.instance.signOut();
+                        _closeConversationMenu();
+                        print('Informar Tapped');
                       },
                     ),
                   ],
@@ -353,17 +413,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       },
     );
 
-    Overlay.of(context).insert(_overlayEntry!);
+    Overlay.of(context).insert(_conversationOverlayEntry!);
     setState(() {
-      _isMenuOpen = true;
+      _isConversationMenuOpen = true;
     });
   }
 
-  void _closeMenu() {
-    if (_isMenuOpen) {
-      _overlayEntry?.remove();
+  void _closeConversationMenu() {
+    if (_isConversationMenuOpen) {
+      _conversationOverlayEntry?.remove();
       setState(() {
-        _isMenuOpen = false;
+        _isConversationMenuOpen = false;
       });
     }
   }
@@ -411,8 +471,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       backgroundColor: const Color(0xFF0C0C0C),
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-        onPressed: () {},
+        key: _historyMenuKey,
+        icon: const Icon(Icons.menu, color: Colors.white),
+        onPressed: _toggleHistoryMenu,
       ),
       title: TextButton.icon(
         onPressed: () {},
@@ -429,9 +490,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       centerTitle: true,
       actions: [
         IconButton(
-          key: _menuKey,
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: _toggleMenu,
+          icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+          onPressed: () {},
         ),
       ],
     );
@@ -439,47 +499,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   PreferredSizeWidget _buildConversationAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF0C0C0C),
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu, color: Colors.white),
-        onPressed: () {
-          // Eventually, this will open the drawer with the chat history
-        },
-      ),
-      title: const Text('Selene'),
-      actions: [
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            // Handle conversation menu selection
-            print('Selected: $value');
+        backgroundColor: const Color(0xFF0C0C0C),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () {
+            // Eventually, this will open the drawer with the chat history
           },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'share',
-              child: Text('Compartir'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'rename',
-              child: Text('Cambiar nombre'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'archive',
-              child: Text('Archivar'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'delete',
-              child: Text('Eliminar'),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem<String>(
-              value: 'report',
-              child: Text('Informar'),
-            ),
-          ],
         ),
-      ],
-    );
+        title: const Text('Selene'),
+        actions: [
+          IconButton(
+            key: _conversationMenuKey,
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: _toggleConversationMenu,
+          )
+        ]);
   }
 
   @override
