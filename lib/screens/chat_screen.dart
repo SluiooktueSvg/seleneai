@@ -146,7 +146,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.clear();
     });
     // Assuming StorageService has a clearConversations method
-    await _storageService.clearConversations();
+    await _storageService.clearConversations(user!.uid);
   }
 
   Future<void> _loadConversations() async {
@@ -159,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _startNewChat() {
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       Navigator.of(context).pop();
-    }
+    } 
     
     setState(() {
       _currentConversation = null;
@@ -179,7 +179,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _loadConversation(Conversation conversation) {
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       Navigator.of(context).pop();
-    }
+    } 
     
     setState(() {
       _currentConversation = conversation;
@@ -259,8 +259,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.insert(0, errorMessage);
       _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
     } finally {
-      await _storageService.saveConversation(_currentConversation!);
-      setState(() {
+      await _storageService.saveConversation(user!.uid, _currentConversation!); // Save the updated conversation
         _isTyping = false;
       });
       _loadConversations();
@@ -445,8 +444,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                 TextButton(
                                   onPressed: () {
                                      if (_currentConversation != null) {
-                                      _storageService.deleteConversation(_currentConversation!.id);
-                                      _loadConversations();
+                                      _storageService.deleteConversation(user!.uid, _currentConversation!.id);
                                     }
                                     _startNewChat();
                                     Navigator.of(context).pop();
@@ -520,7 +518,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   setState(() {
                     _currentConversation!.title = newTitle;
                   });
-                  await _storageService.saveConversation(_currentConversation!);
+                  await _storageService.saveConversation(user!.uid, _currentConversation!);
                   _loadConversations();
                   Navigator.of(context).pop();
                 }
