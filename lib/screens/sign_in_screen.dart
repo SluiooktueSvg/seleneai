@@ -19,7 +19,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
 
   Future<void> _signInWithGoogle() async {
-    setState(() async {
+    setState(() {
       _isLoading = true;
     });
 
