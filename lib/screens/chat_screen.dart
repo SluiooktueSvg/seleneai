@@ -713,33 +713,39 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   // Método para manejar la lógica del botón "Obtener Plus"
-  void _handlePlusButtonPress() {
-    // Definir el color de destino para la animación (un color diferente al original)
-    const Color pressedColor = Colors.blueGrey; // Puedes cambiar este color
+void _handlePlusButtonPress() {
+  // Detener cualquier animación o temporizador existente
+  _plusButtonAnimationController.stop();
+  _plusButtonTimer?.cancel();
 
-    // Detener cualquier animación o temporizador existente
-    _plusButtonAnimationController.stop();
-    _plusButtonTimer?.cancel();
+  // Definir el color de destino para la animación (un color diferente al original)
+  const Color pressedColor = Colors.blueGrey; // Puedes cambiar este color
 
-    // Actualizar el ColorTween para la animación forward
-    (_plusButtonColorAnimation as ColorTween).begin = _plusButtonColor;
-    (_plusButtonColorAnimation as ColorTween).end = pressedColor;
+  // Crear un nuevo ColorTween para la animación forward
+  final ColorTween forwardTween = ColorTween(
+    begin: _plusButtonColor, // Color inicial (color actual del botón)
+    end: pressedColor, // Color al presionar
+  );
 
-    // Iniciar la animación de color hacia el color de "presionado"
-    _plusButtonAnimationController.forward(from: 0.0);
+  // Aplicar el nuevo tween a la animación y comenzar la animación forward
+  _plusButtonColorAnimation = forwardTween.animate(_plusButtonAnimationController);
+  _plusButtonAnimationController.forward(from: 0.0);
 
-    // Iniciar el temporizador para revertir el color después de 3 segundos
-    _plusButtonTimer = Timer(const Duration(seconds: 3), () {
-      // Actualizar el ColorTween para la animación reverse
-      (_plusButtonColorAnimation as ColorTween).begin = pressedColor;
-      (_plusButtonColorAnimation as ColorTween).end = _plusButtonColor;
+  // Iniciar el temporizador para revertir el color después de 3 segundos
+  _plusButtonTimer = Timer(const Duration(seconds: 3), () {
+    // Crear un nuevo ColorTween para la animación reverse
+    final ColorTween reverseTween = ColorTween(
+      begin: pressedColor, // Color inicial para la reversión (el color de "presionado")
+      end: _plusButtonColor, // Color final para la reversión (el color original)
+    );
 
-      // Iniciar la animación para revertir al color original
-      _plusButtonAnimationController.reverse(from: 1.0);
-    });
+    // Aplicar el nuevo tween a la animación y comenzar la animación reverse
+    _plusButtonColorAnimation = reverseTween.animate(_plusButtonAnimationController);
+    _plusButtonAnimationController.reverse(from: 1.0); // Comenzar desde el final
+  });
 
-    // Actualizar el color actual del botón para el próximo ciclo
-    _plusButtonColor = pressedColor; // Actualiza el color base a donde llegó la animación
+  // Actualizar el color actual del botón para el próximo ciclo de animación
+  _plusButtonColor = pressedColor; // El color base para la próxima animación forward
 
     // TODO: Agregar la lógica específica del botón "Obtener Plus" aquí
     print('Botón "Obtener Plus" presionado');
