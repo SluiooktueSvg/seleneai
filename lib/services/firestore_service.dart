@@ -57,4 +57,27 @@ class FirestoreService {
       await doc.reference.delete();
     }
   }
+
+  // Nuevo método para buscar mensajes en las conversaciones del usuario
+  Future<List<ChatMessage>> searchMessages(String query, String userId) async {
+    final userDocRef = _db.collection('users').doc(userId);
+    final conversationsCollection = userDocRef.collection('conversations');
+
+    final querySnapshot = await conversationsCollection.get();
+    List<ChatMessage> searchResults = [];
+
+    for (final doc in querySnapshot.docs) {
+      final data = doc.data();
+      final messagesData = List<Map<String, dynamic>>.from(data['messages'] ?? []);
+      final messages = messagesData.map((msgData) {
+        return ChatMessage.fromJson(msgData);
+      }).toList();
+
+      // Filtrar mensajes que contengan la palabra clave (insensible a mayúsculas/minúsculas)
+      final matchingMessages = messages.where((message) => message.text.toLowerCase().contains(query)).toList();
+      searchResults.addAll(matchingMessages);
+    }
+
+    return searchResults;
+  }
 }
