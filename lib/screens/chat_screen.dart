@@ -150,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadConversations() async {
-    final conversations = await _storageService.loadConversations();
+    final conversations = await _storageService.loadConversations(user!.uid);
     setState(() {
       _conversations = conversations;
     });
@@ -260,9 +260,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
     } finally {
       await _storageService.saveConversation(user!.uid, _currentConversation!); // Save the updated conversation
+      setState(() {
         _isTyping = false;
       });
-      _loadConversations();
     }
   }
 
