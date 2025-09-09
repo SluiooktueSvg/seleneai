@@ -29,12 +29,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
   final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
-  
+
   // State for conversations
   final FirestoreService _firestoreService = FirestoreService();
   List<Conversation> _conversations = [];
   Conversation? _currentConversation;
-  
+
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
 
@@ -113,7 +113,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     _initSpeech();
-     _voiceAnimationController = AnimationController(
+    _voiceAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
@@ -127,12 +127,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _phraseTimer.cancel();
-    _closeHistoryMenu(); 
+    _closeHistoryMenu();
     _closeConversationMenu();
     _voiceAnimationController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _handleSignOut() async {
     // Close the drawer before signing out
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
@@ -150,7 +150,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadConversations() async {
-    final conversations = await _storageService.loadConversations(user!.uid);
+    final conversations = await _firestoreService.loadConversations(user!.uid);
     setState(() {
       _conversations = conversations;
     });
@@ -159,34 +159,38 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   void _startNewChat() {
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       Navigator.of(context).pop();
-    } 
-    
+    }
+
     setState(() {
       _currentConversation = null;
       final int count = _messages.length;
       for (int i = 0; i < count; i++) {
         _listKey.currentState?.removeItem(
-          0, 
-          (context, animation) => _buildAnimatedItem(context, 0, animation, _messages[0]),
-          duration: const Duration(milliseconds: 200)
-        );
+            0,
+            (context, animation) =>
+                _buildAnimatedItem(context, 0, animation, _messages[0]),
+            duration: const Duration(milliseconds: 200));
       }
       _messages.clear();
       _chat = _model.startChat();
     });
   }
-  
+
   void _loadConversation(Conversation conversation) {
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       Navigator.of(context).pop();
-    } 
-    
+    }
+
     setState(() {
       _currentConversation = conversation;
       _messages.clear();
       _messages.addAll(conversation.messages);
-      _chat = _model.startChat(history: conversation.messages.where((m) => m.text.isNotEmpty).map((m) {
-        return m.isUser ? Content.text(m.text) : Content.model([TextPart(m.text)]);
+      _chat = _model.startChat(
+          history:
+              conversation.messages.where((m) => m.text.isNotEmpty).map((m) {
+        return m.isUser
+            ? Content.text(m.text)
+            : Content.model([TextPart(m.text)]);
       }).toList());
     });
   }
@@ -209,9 +213,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _textController.clear();
 
     if (_currentConversation == null) {
-      final newConversationId = DateTime.now().millisecondsSinceEpoch.toString();
-      final title = messageText.length > 30 ? messageText.substring(0, 30) : messageText;
-      _currentConversation = Conversation(id: newConversationId, title: title, messages: []);
+      final newConversationId =
+          DateTime.now().millisecondsSinceEpoch.toString();
+      final title =
+          messageText.length > 30 ? messageText.substring(0, 30) : messageText;
+      _currentConversation =
+          Conversation(id: newConversationId, title: title, messages: []);
       _conversations.insert(0, _currentConversation!);
     }
 
@@ -221,21 +228,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       timestamp: DateTime.now(),
       conversationId: _currentConversation!.id,
     );
-    
+
     _currentConversation!.messages.insert(0, userMessage);
     if (_messages.isEmpty) {
-      setState(() {}); 
+      setState(() {});
     }
     _messages.insert(0, userMessage);
-    _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
-    
+    _listKey.currentState
+        ?.insertItem(0, duration: const Duration(milliseconds: 300));
+
     setState(() {
       _isTyping = true;
     });
 
     try {
-      final content = [TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$messageText")];
-     
+      final content = [
+        TextPart(
+            "System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$messageText")
+      ];
+
       final response = await _chat.sendMessage(Content.multi(content));
       final aiMessage = ChatMessage(
         text: response.text ?? '...',
@@ -245,8 +256,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       );
       _currentConversation!.messages.insert(0, aiMessage);
       _messages.insert(0, aiMessage);
-      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
-
+      _listKey.currentState
+          ?.insertItem(0, duration: const Duration(milliseconds: 300));
     } catch (e) {
       print('Error sending message: $e');
       final errorMessage = ChatMessage(
@@ -257,9 +268,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       );
       _currentConversation!.messages.insert(0, errorMessage);
       _messages.insert(0, errorMessage);
-      _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
+      _listKey.currentState
+          ?.insertItem(0, duration: const Duration(milliseconds: 300));
     } finally {
-      await _storageService.saveConversation(user!.uid, _currentConversation!); // Save the updated conversation
+      await _firestoreService.saveConversation(
+          user!.uid, _currentConversation!); // Save the updated conversation
       setState(() {
         _isTyping = false;
       });
@@ -280,13 +293,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             }
           },
         );
-      } 
+      }
     } else {
       setState(() => _isListening = false);
       _speechToText.stop();
     }
   }
-  
+
   void _toggleVoiceChat() {
     setState(() {
       _isVoiceChatActive = !_isVoiceChatActive;
@@ -302,7 +315,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _openHistoryMenu() {
-    final renderBox = _historyMenuKey.currentContext!.findRenderObject() as RenderBox;
+    final renderBox =
+        _historyMenuKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
@@ -328,14 +342,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.graphic_eq, color: Colors.white),
-                      title: const Text('Real-time chat', style: TextStyle(color: Colors.white)),
+                      leading:
+                          const Icon(Icons.graphic_eq, color: Colors.white),
+                      title: const Text('Real-time chat',
+                          style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeHistoryMenu();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => VoiceChatScreen(apiKey: widget.apiKey),
+                            builder: (context) =>
+                                VoiceChatScreen(apiKey: widget.apiKey),
                           ),
                         );
                       },
@@ -373,7 +390,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _openConversationMenu() {
-    final renderBox = _conversationMenuKey.currentContext!.findRenderObject() as RenderBox;
+    final renderBox =
+        _conversationMenuKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final offset = renderBox.localToGlobal(Offset.zero);
 
@@ -399,32 +417,40 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.share_outlined, color: Colors.white),
-                      title: const Text('Compartir', style: TextStyle(color: Colors.white)),
+                      leading:
+                          const Icon(Icons.share_outlined, color: Colors.white),
+                      title: const Text('Compartir',
+                          style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeConversationMenu();
                         print('Compartir Tapped');
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.edit_outlined, color: Colors.white),
-                      title: const Text('Cambiar nombre', style: TextStyle(color: Colors.white)),
+                      leading:
+                          const Icon(Icons.edit_outlined, color: Colors.white),
+                      title: const Text('Cambiar nombre',
+                          style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeConversationMenu();
                         _renameConversation();
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.archive_outlined, color: Colors.white),
-                      title: const Text('Archivar', style: TextStyle(color: Colors.white)),
+                      leading: const Icon(Icons.archive_outlined,
+                          color: Colors.white),
+                      title: const Text('Archivar',
+                          style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeConversationMenu();
                         print('Archivar Tapped');
                       },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                      title: const Text('Eliminar', style: TextStyle(color: Colors.redAccent)),
+                      leading: const Icon(Icons.delete_outline,
+                          color: Colors.redAccent),
+                      title: const Text('Eliminar',
+                          style: TextStyle(color: Colors.redAccent)),
                       onTap: () {
                         _closeConversationMenu();
                         showDialog(
@@ -443,8 +469,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                     if (_currentConversation != null) {
-                                      _storageService.deleteConversation(user!.uid, _currentConversation!.id);
+                                    if (_currentConversation != null) {
+                                      _firestoreService.deleteConversation(
+                                          user!.uid, _currentConversation!.id);
                                     }
                                     _startNewChat();
                                     Navigator.of(context).pop();
@@ -459,8 +486,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     ),
                     const Divider(color: Colors.white24, height: 1),
                     ListTile(
-                      leading: const Icon(Icons.flag_outlined, color: Colors.white),
-                      title: const Text('Informar', style: TextStyle(color: Colors.white)),
+                      leading:
+                          const Icon(Icons.flag_outlined, color: Colors.white),
+                      title: const Text('Informar',
+                          style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeConversationMenu();
                         print('Informar Tapped');
@@ -518,7 +547,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                   setState(() {
                     _currentConversation!.title = newTitle;
                   });
-                  await _storageService.saveConversation(user!.uid, _currentConversation!);
+                  await _firestoreService.saveConversation(
+                      user!.uid, _currentConversation!);
+
                   _loadConversations();
                   Navigator.of(context).pop();
                 }
@@ -533,9 +564,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   bool get _hasStartedChat => _messages.isNotEmpty;
 
-  Widget _buildAnimatedItem(
-      BuildContext context, int index, Animation<double> animation, ChatMessage message) {
-
+  Widget _buildAnimatedItem(BuildContext context, int index,
+      Animation<double> animation, ChatMessage message) {
     final scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: animation,
@@ -574,7 +604,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.white),
         onPressed: () {
-           _scaffoldKey.currentState?.openDrawer();
+          _scaffoldKey.currentState?.openDrawer();
         },
       ),
       title: TextButton.icon(
@@ -631,7 +661,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFF0C0C0C),
-      appBar: _messages.isEmpty ? _buildInitialAppBar() : _buildConversationAppBar(),
+      appBar: _messages.isEmpty
+          ? _buildInitialAppBar()
+          : _buildConversationAppBar(),
       drawer: ChatDrawer(
         user: user,
         conversations: _conversations,
@@ -676,7 +708,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                         initialItemCount: _messages.length,
                         itemBuilder: (context, index, animation) {
                           final message = _messages[index];
-                          return _buildAnimatedItem(context, index, animation, message);
+                          return _buildAnimatedItem(
+                              context, index, animation, message);
                         },
                       ),
               ),
@@ -696,8 +729,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
     );
   }
-  
-   Widget _buildVoiceChatOverlay() {
+
+  Widget _buildVoiceChatOverlay() {
     return GestureDetector(
       onTap: _toggleVoiceChat,
       child: Container(
@@ -711,15 +744,21 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 child: AnimatedBuilder(
                   animation: _voiceAnimationController,
                   builder: (context, child) {
-                    final double size = _isListening ? 150.0 + _voiceAnimationController.value * 30 : 150.0;
+                    final double size = _isListening
+                        ? 150.0 + _voiceAnimationController.value * 30
+                        : 150.0;
                     return Container(
                       width: size,
                       height: size,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: _isListening ? Colors.cyanAccent.withOpacity(0.5) : Colors.white24,
+                        color: _isListening
+                            ? Colors.cyanAccent.withOpacity(0.5)
+                            : Colors.white24,
                         border: Border.all(
-                          color: _isListening ? Colors.cyanAccent : Colors.transparent,
+                          color: _isListening
+                              ? Colors.cyanAccent
+                              : Colors.transparent,
                           width: 2.0,
                         ),
                       ),
@@ -733,7 +772,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(_voiceChatStatus, style: const TextStyle(color: Colors.white54, fontSize: 18)),
+              Text(_voiceChatStatus,
+                  style: const TextStyle(color: Colors.white54, fontSize: 18)),
             ],
           ),
         ),
@@ -780,18 +820,19 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ),
             IconButton(
-                icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: Colors.white54),
-                onPressed: _handleVoiceMessage,
+              icon: Icon(_isListening ? Icons.mic_off : Icons.mic,
+                  color: Colors.white54),
+              onPressed: _handleVoiceMessage,
             ),
             hasText
-              ? IconButton(
-                  icon: const Icon(Icons.send, color: Colors.white54),
-                  onPressed: () => _handleSendMessage(),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.graphic_eq, color: Colors.white54),
-                  onPressed: _toggleVoiceChat,
-                ),
+                ? IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white54),
+                    onPressed: () => _handleSendMessage(),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.graphic_eq, color: Colors.white54),
+                    onPressed: _toggleVoiceChat,
+                  ),
           ],
         ),
       ),
