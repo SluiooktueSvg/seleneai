@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:selene/models/conversation.dart';
 import 'package:selene/models/chat_message.dart'; // Importamos ChatMessage
 import 'package:selene/services/firestore_service.dart'; // Importamos FirestoreService
+import 'package:selene/models/search_result_item.dart'; // Importamos SearchResultItem
 
 class ChatDrawer extends StatefulWidget {
   final User? user;
@@ -28,7 +29,7 @@ class _ChatDrawerState extends State<ChatDrawer> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode(); // Agregamos un FocusNode
   bool _isSearching = false;
-  List<ChatMessage> _searchResults = []; // Lista para almacenar los resultados de la búsqueda
+  List<SearchResultItem> _searchResults = []; // La lista ahora es de SearchResultItem
   final FirestoreService _firestoreService = FirestoreService(); // Instancia de FirestoreService
 
   @override
@@ -41,7 +42,6 @@ class _ChatDrawerState extends State<ChatDrawer> {
   void _onSearchChanged() async {
     final query = _searchController.text.toLowerCase(); // Convertir a minúsculas para búsqueda insensible
     setState(() {
-      // Verificamos si la consulta no está vacía O si el TextField tiene el foco
       _isSearching = query.isNotEmpty || _searchFocusNode.hasFocus;
     });
 
@@ -146,16 +146,35 @@ class _ChatDrawerState extends State<ChatDrawer> {
                       : ListView.builder(
                           itemCount: _searchResults.length,
                           itemBuilder: (context, index) {
-                            final message = _searchResults[index];
-                            // Aquí puedes diseñar cómo mostrar cada resultado del mensaje
+                            final resultItem = _searchResults[index]; // Obtenemos el SearchResultItem
                             return ListTile(
                               title: Text(
-                                message.text, // O el campo que contenga el texto del mensaje
-                                style: const TextStyle(color: Colors.white),
+                                resultItem.conversationTitle, // Mostramos el título de la conversación
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold, // Opcional: negrita para el título
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                resultItem.message.text, // Mostramos el texto del mensaje
+                                style: const TextStyle(
+                                  color: Colors.white70, // Color más tenue
+                                  fontSize: 12.0, // Tamaño de fuente más pequeño
+                                ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               // Puedes añadir onTap para navegar a la conversación del mensaje
+                              onTap: () {
+                                // TODO: Implementar navegación a la conversación
+                                print('Tapped on message from: ${resultItem.conversationTitle}');
+                                // Idealmente, aquí navegarías a la pantalla de chat para esa conversación
+                                // y quizás desplazarías la vista al mensaje específico.
+                                // Esto requeriría pasar la conversación y el mensaje al onLoadConversation
+                                // o una función similar.
+                              },
                             );
                           },
                         ),

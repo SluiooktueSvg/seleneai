@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:selene/models/conversation.dart';
 import 'package:selene/models/chat_message.dart';
+import 'package:selene/models/search_result_item.dart'; // Importamos la nueva clase
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -59,15 +60,16 @@ class FirestoreService {
   }
 
   // Nuevo método para buscar mensajes en las conversaciones del usuario
-  Future<List<ChatMessage>> searchMessages(String query, String userId) async {
+  Future<List<SearchResultItem>> searchMessages(String query, String userId) async {
     final userDocRef = _db.collection('users').doc(userId);
     final conversationsCollection = userDocRef.collection('conversations');
 
     final querySnapshot = await conversationsCollection.get();
-    List<ChatMessage> searchResults = [];
+    List<SearchResultItem> searchResults = [];
 
     for (final doc in querySnapshot.docs) {
       final data = doc.data();
+      final conversationTitle = data['title'] ?? 'Conversación sin título'; // Obtener el título de la conversación
       final messagesData = List<Map<String, dynamic>>.from(data['messages'] ?? []);
       final messages = messagesData.map((msgData) {
         return ChatMessage.fromJson(msgData);
@@ -75,7 +77,11 @@ class FirestoreService {
 
       // Filtrar mensajes que contengan la palabra clave (insensible a mayúsculas/minúsculas)
       final matchingMessages = messages.where((message) => message.text.toLowerCase().contains(query)).toList();
-      searchResults.addAll(matchingMessages);
+
+      // Crear SearchResultItem por cada mensaje coincidente
+      for (final message in matchingMessages) {
+        searchResults.add(SearchResultItem(message: message, conversationTitle: conversationTitle));
+      }
     }
 
     return searchResults;
