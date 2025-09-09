@@ -610,6 +610,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return AppBar(
       backgroundColor: const Color(0xFF0C0C0C),
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.white),
         onPressed: () {
@@ -656,7 +658,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         title: Text(
         _currentConversation?.title ?? 'Selene',
         style: const TextStyle(
-          fontSize: 5, //cambiar el tamaño de letra "se supone que el texto del appbar"
+          fontSize: 16, //cambiar el tamaño de letra "se supone que el texto del appbar"
         )),
         actions: [
           IconButton(
