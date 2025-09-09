@@ -6,7 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:selene/models/conversation.dart';
 import 'package:selene/services/firestore_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:fluttertoast/fluttertoast.dart'; 
+import 'package:fluttertoast/fluttertoast.dart'; // Importar fluttertoast
 
 import '../models/chat_message.dart';
 import '../widgets/chat_drawer.dart';
@@ -14,6 +14,7 @@ import '../widgets/chat_message_bubble.dart';
 import '../widgets/typewriter_hint_text.dart';
 import 'voice_chat_screen.dart';
 import '../widgets/animated_phrase_carousel.dart';
+import '../models/search_result_item.dart'; // Importar SearchResultItem
 
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 
@@ -72,6 +73,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   String _voiceChatStatus = "Toca para hablar";
   late final AnimationController _voiceAnimationController;
 
+  // Variables para el botón "Obtener Plus"
+  Color _plusButtonColor = const Color(0xFF3A416F); // Color original del botón
+  late final AnimationController _plusButtonAnimationController;
+  late final Animation<Color?> _plusButtonColorAnimation;
+  Timer? _plusButtonTimer; // Temporizador para revertir el color
+
   @override
   void initState() {
     super.initState();
@@ -118,6 +125,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 500),
     )..repeat(reverse: true);
+
+    // Inicializar AnimationController para el botón "Obtener Plus"
+    _plusButtonAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100), // Duración corta para desvanecimiento rápido
+    );
+
+    // Definir la animación de color (el color final se define en _handlePlusButtonPress)
+    _plusButtonColorAnimation = ColorTween(
+      begin: _plusButtonColor, // Color inicial
+      end: Colors.greenAccent, // Color al presionar (será sobreescrito)
+    ).animate(_plusButtonAnimationController);
   }
 
   void _initSpeech() async {
@@ -131,6 +150,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _closeHistoryMenu();
     _closeConversationMenu();
     _voiceAnimationController.dispose();
+    _plusButtonAnimationController.dispose(); // Desechar controlador
+    _plusButtonTimer?.cancel(); // Cancelar temporizador si está activo
     super.dispose();
   }
 
@@ -196,6 +217,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
   }
 
+  // Método para eliminar conversación con confirmación y Toast
   void _deleteConversation() {
     if (_currentConversation == null) return;
 
@@ -209,19 +231,33 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Cierra el diálogo "Cancelar"
               },
               child: const Text('Cancelar'),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
+                // Close the dialog FIRST
+                Navigator.of(context).pop(); // Cierra el diálogo "Eliminar"
+
+                // Perform deletion and state updates
                 if (_currentConversation != null) {
                   await _firestoreService.deleteConversation(
                       user!.uid, _currentConversation!.id);
+
                   await _loadConversations();
-                  Fluttertoast.showToast(msg: "Chat eliminado exitosamente", toastLength: Toast.LENGTH_SHORT, gravity: ToastGravity.BOTTOM, backgroundColor: Colors.grey[700], textColor: Colors.white, fontSize: 16.0,);
+
+                  // Mostrar Toast Notification
+                  Fluttertoast.showToast(
+                    msg: "Chat eliminado exitosamente",
+                    toastLength: Toast.LENGTH_SHORT,
+                    gravity: ToastGravity.BOTTOM,
+                    backgroundColor: Colors.grey[700],
+                    textColor: Colors.white,
+                    fontSize: 16.0,
+                  );
                 }
+
                 _startNewChat();
               },
               child: const Text('Eliminar'),
@@ -231,7 +267,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       },
     );
   }
-  
+
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -426,7 +462,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _openConversationMenu();
     }
   }
-  
 
   void _openConversationMenu() {
     final renderBox =
@@ -491,46 +526,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       title: const Text('Eliminar',
                           style: TextStyle(color: Colors.redAccent)),
                       onTap: () {
-                        _closeConversationMenu();
-                        _deleteConversation();
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Eliminar Chat'),
-                              content: const Text(
-                                  '¿Estás seguro de que quieres eliminar la conversación actual?'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Cancelar'),
-                                ),
-                                TextButton(
-                                  onPressed: () async {
-                                    Navigator.of(context).pop();
-                                    if (_currentConversation != null) {
-                                    await _loadConversations();
-                                    // Mostrar Toast Notification
-                                    Fluttertoast.showToast(
-                                     msg: "Chat eliminado exitosamente", // Mensaje del Toast
-                                     toastLength: Toast.LENGTH_SHORT,    // Duración (SHORT o LONG)
-                                     gravity: ToastGravity.BOTTOM,       // Posición (TOP, CENTER, BOTTOM)
-                                     backgroundColor: Colors.grey[700],  // Color de fondo
-                                     textColor: Colors.white,            // Color del texto
-                                     fontSize: 16.0,                     // Tamaño de fuente
-                                     );
-                                    }
-
-                                    _startNewChat();
-                                  },
-                                  child: const Text('Eliminar'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
+                        _closeConversationMenu(); // Cerrar el menú antes de mostrar el diálogo
+                        _deleteConversation(); // Llama al método que incluye el AlertDialog y Toast
                       },
                     ),
                     const Divider(color: Colors.white24, height: 1),
@@ -650,25 +647,30 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     return AppBar(
       backgroundColor: const Color(0xFF0C0C0C),
       elevation: 0,
-      surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent, // Agregamos esto
+      shadowColor: Colors.transparent,      // Agregamos esto
       leading: IconButton(
         icon: const Icon(Icons.menu, color: Colors.white),
         onPressed: () {
           _scaffoldKey.currentState?.openDrawer();
         },
       ),
-      title: TextButton.icon(
-        onPressed: () {},
-        style: TextButton.styleFrom(
-          backgroundColor: const Color(0xFF3A416F),
-          shape: const StadiumBorder(),
-        ),
-        icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
-        label: const Text(
-          'Obtener Plus',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
+      title: AnimatedBuilder( // Usamos AnimatedBuilder para reconstruir con la animación
+        animation: _plusButtonColorAnimation,
+        builder: (context, child) {
+          return TextButton.icon(
+            onPressed: _handlePlusButtonPress, // Creamos un nuevo método para la lógica
+            style: TextButton.styleFrom(
+              backgroundColor: _plusButtonColorAnimation.value, // Usamos el valor animado
+              shape: const StadiumBorder(),
+            ),
+            icon: const Icon(Icons.auto_awesome, size: 16, color: Colors.white),
+            label: const Text(
+              'Obtener Plus',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          );
+        },
       ),
       centerTitle: true,
       actions: [
@@ -696,10 +698,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           },
         ),
         title: Text(
-        _currentConversation?.title ?? 'Selene',
-        style: const TextStyle(
-          fontSize: 16, //cambiar el tamaño de letra "se supone que el texto del appbar"
-        )),
+          _currentConversation?.title ?? 'Selene',
+          style: const TextStyle(
+            fontSize: 16.0, // Ajusta este valor para cambiar el tamaño del texto
+          ),
+        ),
         actions: [
           IconButton(
             key: _conversationMenuKey,
@@ -708,6 +711,40 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           )
         ]);
   }
+
+  // Método para manejar la lógica del botón "Obtener Plus"
+  void _handlePlusButtonPress() {
+    // Definir el color de destino para la animación (un color diferente al original)
+    const Color pressedColor = Colors.blueGrey; // Puedes cambiar este color
+
+    // Detener cualquier animación o temporizador existente
+    _plusButtonAnimationController.stop();
+    _plusButtonTimer?.cancel();
+
+    // Actualizar el ColorTween para la animación forward
+    (_plusButtonColorAnimation as ColorTween).begin = _plusButtonColor;
+    (_plusButtonColorAnimation as ColorTween).end = pressedColor;
+
+    // Iniciar la animación de color hacia el color de "presionado"
+    _plusButtonAnimationController.forward(from: 0.0);
+
+    // Iniciar el temporizador para revertir el color después de 3 segundos
+    _plusButtonTimer = Timer(const Duration(seconds: 3), () {
+      // Actualizar el ColorTween para la animación reverse
+      (_plusButtonColorAnimation as ColorTween).begin = pressedColor;
+      (_plusButtonColorAnimation as ColorTween).end = _plusButtonColor;
+
+      // Iniciar la animación para revertir al color original
+      _plusButtonAnimationController.reverse(from: 1.0);
+    });
+
+    // Actualizar el color actual del botón para el próximo ciclo
+    _plusButtonColor = pressedColor; // Actualiza el color base a donde llegó la animación
+
+    // TODO: Agregar la lógica específica del botón "Obtener Plus" aquí
+    print('Botón "Obtener Plus" presionado');
+  }
+
 
   @override
   Widget build(BuildContext context) {
