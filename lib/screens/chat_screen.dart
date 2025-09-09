@@ -133,6 +133,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     super.dispose();
   }
   
+  Future<void> _handleSignOut() async {
+    // Close the drawer before signing out
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.of(context).pop();
+    }
+    await FirebaseAuth.instance.signOut();
+    await _googleSignIn.signOut();
+    setState(() {
+      _conversations = [];
+      _currentConversation = null;
+      _messages.clear();
+    });
+    // Assuming StorageService has a clearConversations method
+    await _storageService.clearConversations();
+  }
+
   Future<void> _loadConversations() async {
     final conversations = await _storageService.loadConversations();
     setState(() {
@@ -622,10 +638,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         user: user,
         conversations: _conversations,
         onNewChat: _startNewChat,
-        onSignOut: () {
-          _googleSignIn.signOut();
-          FirebaseAuth.instance.signOut();
-        },
+        onSignOut: _handleSignOut,
         onLoadConversation: _loadConversation,
       ),
       body: Stack(

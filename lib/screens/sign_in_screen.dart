@@ -19,7 +19,7 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
 
   Future<void> _signInWithGoogle() async {
-    setState(() {
+    setState(() async {
       _isLoading = true;
     });
 
@@ -37,7 +37,15 @@ class _SignInScreenState extends State<SignInScreen> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
+
+      // Use signIn with prompt: Prompt.selectAccount to force account selection
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Check if the user object is not null before proceeding
+      if (userCredential.user != null) {
+        // Let the AuthWrapper handle the navigation
+      }
+
       // Let the AuthWrapper handle the navigation
       await FirebaseAuth.instance.signInWithCredential(credential);
 
@@ -45,6 +53,12 @@ class _SignInScreenState extends State<SignInScreen> {
       print("Something went wrong with Google Sign-In: $e");
       // Stop loading if there is an error
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signOutGoogle() async {
+    await _googleSignIn.signOut();
+    await FirebaseAuth.instance.signOut();
     }
   }
 

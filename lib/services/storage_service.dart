@@ -35,4 +35,9 @@ class StorageService {
     final conversationsJson = conversations.map((c) => jsonEncode(c.toJson())).toList();
     await prefs.setStringList(_conversationsKey, conversationsJson);
   }
+
+  Future<void> clearConversations() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_conversationsKey);
+  }
 }
