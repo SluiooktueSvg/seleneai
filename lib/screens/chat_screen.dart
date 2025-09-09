@@ -478,7 +478,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                     if (_currentConversation != null) {
                                       _firestoreService.deleteConversation(
                                           user!.uid, _currentConversation!.id);
+                                    
+                                    // Reload conversations from Firestore to update the list
+                                    await _loadConversations();
                                     }
+
                                     _startNewChat();
                                   },
                                   child: const Text('Eliminar'),
