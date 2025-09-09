@@ -23,7 +23,7 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn(prompt: Prompt.selectAccount);
+     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       // If the user cancels the sign-in, stop the loading indicator
       if (googleUser == null) {
