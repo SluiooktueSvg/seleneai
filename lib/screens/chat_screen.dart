@@ -255,7 +255,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                     msg: "Chat successfully deleted",
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
-                    backgroundColor: const Color.fromARGB(255, 49, 49, 49),
+                    backgroundColor: const Color.fromARGB(255, 31, 31, 31),
                     textColor: Colors.white,
                     fontSize: 12.0,
                   );
@@ -294,9 +294,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
           DateTime.now().millisecondsSinceEpoch.toString();
       final title =
           messageText.length > 30 ? messageText.substring(0, 30) : messageText;
-      _currentConversation =
-          Conversation(id: newConversationId, title: title, messages: []);
-      _conversations.insert(0, _currentConversation!);
+      _currentConversation = Conversation(
+        id: newConversationId,
+        title: title,
+        userName: user?.displayName ?? 'Usuario',
+        messages: [],
+      );
+
     }
 
     final userMessage = ChatMessage(
@@ -763,9 +767,15 @@ void _handlePlusButtonPress() {
   _plusButtonColor = pressedColor; // El color base para la próxima animación forward
 
     // TODO: Agregar la lógica específica del botón "Obtener Plus" aquí
-    print('Botón "Obtener Plus" presionado');
-  }
-
+      Fluttertoast.showToast(
+        msg: "Plus functionality coming soon",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: const Color.fromARGB(255, 0, 0, 0), // Puedes elegir otro color
+        textColor: Colors.white,
+        fontSize: 14.0, // Usamos el tamaño de fuente más pequeño que querías
+      );
+ }
 
   @override
   Widget build(BuildContext context) {

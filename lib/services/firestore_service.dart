@@ -16,6 +16,7 @@ class FirestoreService {
     await conversationDocRef.set({
       'id': conversation.id,
       'title': conversation.title,
+      'userName': conversation.userName,
       'messages': messagesData,
       'timestamp': conversation.messages.isNotEmpty ? Timestamp.fromDate(conversation.messages.first.timestamp) : FieldValue.serverTimestamp(), // Use the timestamp of the first message or server timestamp
     });
@@ -38,6 +39,7 @@ class FirestoreService {
       return Conversation(
         id: data['id'],
         title: data['title'],
+        userName: data['userName'] ?? 'Usuario',
         messages: messages,
       );
     }).toList();
