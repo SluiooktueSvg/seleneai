@@ -17,6 +17,8 @@ import '../widgets/animated_phrase_carousel.dart';
 import '../models/search_result_item.dart'; // Importar SearchResultItem
 
 final GoogleSignIn _googleSignIn = GoogleSignIn();
+// Instancia de Random para generar colores aleatorios
+final Random _random = Random();
 
 class ChatScreen extends StatefulWidget {
   final String apiKey;
@@ -713,13 +715,25 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   // Método para manejar la lógica del botón "Obtener Plus"
+  // Método para generar un color aleatorio (omitiendo colores muy oscuros o claros si deseas)
+  Color _generateRandomColor() {
+    // Generar valores aleatorios para R, G, B entre 0 y 255
+    final int r = _random.nextInt(256);
+    final int g = _random.nextInt(256);
+    final int b = _random.nextInt(256);
+
+    // Puedes ajustar para evitar colores muy oscuros o claros si es necesario
+    // Por ejemplo, asegurar que al menos uno de los componentes sea mayor que un umbral
+
+    return Color.fromARGB(255, r, g, b); // Usar 255 para opacidad completa
+  }
 void _handlePlusButtonPress() {
   // Detener cualquier animación o temporizador existente
   _plusButtonAnimationController.stop();
   _plusButtonTimer?.cancel();
 
   // Definir el color de destino para la animación (un color diferente al original)
-  const Color pressedColor = Colors.blueGrey; // Puedes cambiar este color
+  final Color pressedColor = _generateRandomColor(); // Generar color aleatorio
 
   // Crear un nuevo ColorTween para la animación forward
   final ColorTween forwardTween = ColorTween(
@@ -736,7 +750,7 @@ void _handlePlusButtonPress() {
     // Crear un nuevo ColorTween para la animación reverse
     final ColorTween reverseTween = ColorTween(
       begin: pressedColor, // Color inicial para la reversión (el color de "presionado")
-      end: _plusButtonColor, // Color final para la reversión (el color original)
+      end: const Color(0xFF3A416F), // Color final para la reversión (el color original)
     );
 
     // Aplicar el nuevo tween a la animación y comenzar la animación reverse
@@ -744,7 +758,7 @@ void _handlePlusButtonPress() {
     _plusButtonAnimationController.reverse(from: 1.0); // Comenzar desde el final
   });
 
-  // Actualizar el color actual del botón para el próximo ciclo de animación
+  // Actualizar el color actual del botón (para que la próxima animación inicie desde el color aleatorio)
   _plusButtonColor = pressedColor; // El color base para la próxima animación forward
 
     // TODO: Agregar la lógica específica del botón "Obtener Plus" aquí
