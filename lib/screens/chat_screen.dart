@@ -469,12 +469,17 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                 ),
                                 TextButton(
                                   onPressed: () {
+                                    // Close the dialog first
+                                    Navigator.of(context).pop();
+
+                                    // Perform deletion and state updates
+                                    // Wrap this in an async block if you need to await
+                                    // _firestoreService.deleteConversation
                                     if (_currentConversation != null) {
                                       _firestoreService.deleteConversation(
                                           user!.uid, _currentConversation!.id);
                                     }
                                     _startNewChat();
-                                    Navigator.of(context).pop();
                                   },
                                   child: const Text('Eliminar'),
                                 ),
