@@ -460,7 +460,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                       title: const Text('Cambiar nombre', style: TextStyle(color: Colors.white)),
                       onTap: () {
                         _closeConversationMenu();
-                        print('Cambiar nombre Tapped');
+                        _renameConversation();
                       },
                     ),
                     ListTile(
@@ -540,6 +540,47 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _renameConversation() {
+    if (_currentConversation == null) return;
+
+    final TextEditingController renameController =
+        TextEditingController(text: _currentConversation!.title);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cambiar nombre del chat'),
+          content: TextField(
+            controller: renameController,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Nuevo nombre'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (renameController.text.isNotEmpty) {
+                  final newTitle = renameController.text;
+                  setState(() {
+                    _currentConversation!.title = newTitle;
+                  });
+                  await _storageService.saveConversation(_currentConversation!);
+                  _loadConversations();
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   bool get _hasStartedChat => _messages.isNotEmpty;
 
   Widget _buildAnimatedItem(
@@ -602,11 +643,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       centerTitle: true,
       actions: [
         IconButton(
-          key: _historyMenuKey,
-          icon: const Icon(Icons.add, color: Colors.white),
+          icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
           onPressed: _startNewChat,
         ),
         IconButton(
+          key: _historyMenuKey,
           icon: const Icon(Icons.more_vert, color: Colors.white),
           onPressed: _toggleHistoryMenu,
         ),
@@ -755,6 +796,9 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildTextComposer() {
+    bool hasText = _textController.text.isNotEmpty;
+    bool hasImage = _imageFile != null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
@@ -765,7 +809,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.add, color: Colors.white54),
+              icon: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white54),
               onPressed: _pickImage,
             ),
             Expanded(
@@ -791,13 +835,18 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onChanged: (text) {
                   setState(() {});
                 },
-                onSubmitted: (value) => _handleSendMessage(),
+                onSubmitted: (value) => hasText || hasImage ? _handleSendMessage() : null,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.graphic_eq, color: Colors.white54),
-              onPressed: _toggleVoiceChat,
-            ),
+            (hasText || hasImage)
+              ? IconButton(
+                  icon: const Icon(Icons.send, color: Colors.white54),
+                  onPressed: () => _handleSendMessage(),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.graphic_eq, color: Colors.white54),
+                  onPressed: _toggleVoiceChat,
+                ),
           ],
         ),
       ),
