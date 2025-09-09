@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -19,13 +18,13 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _isLoading = false;
 
   Future<void> _signInWithGoogle() async {
-    setState(() async {
+    setState(() {
       _isLoading = true;
     });
 
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn(prompt: Prompt.selectAccount);
+
       // If the user cancels the sign-in, stop the loading indicator
       if (googleUser == null) {
         if (mounted) setState(() => _isLoading = false);
@@ -39,11 +38,8 @@ class _SignInScreenState extends State<SignInScreen> {
       );
 
       // Let the AuthWrapper handle the navigation
-      await FirebaseAuth.instance.signInWithCredential(credential);    } catch (e) {
-      print("Something went wrong with Google Sign-In: $e");
-      // Stop loading if there is an error
-      if (mounted) setState(() => _isLoading = false);
-    }
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
     } catch (e) {
       print("Something went wrong with Google Sign-In: $e");
       // Stop loading if there is an error
@@ -53,7 +49,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Future<void> _signOutGoogle() async {
     await _googleSignIn.signOut();
-    await FirebaseAuth.instance.signOut();  }
+    await FirebaseAuth.instance.signOut();
   }
 
   @override
