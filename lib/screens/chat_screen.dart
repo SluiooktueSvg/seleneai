@@ -252,12 +252,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
                   // Mostrar Toast Notification
                   Fluttertoast.showToast(
-                    msg: "Chat eliminado exitosamente",
+                    msg: "Chat successfully deleted",
                     toastLength: Toast.LENGTH_SHORT,
                     gravity: ToastGravity.BOTTOM,
-                    backgroundColor: Colors.grey[700],
+                    backgroundColor: const Color.fromARGB(255, 49, 49, 49),
                     textColor: Colors.white,
-                    fontSize: 16.0,
+                    fontSize: 12.0,
                   );
                 }
 
