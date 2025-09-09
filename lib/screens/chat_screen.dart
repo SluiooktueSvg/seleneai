@@ -68,6 +68,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   // Voice Chat State
   bool _isVoiceChatActive = false;
+  String _voiceChatStatus = "Toca para hablar";
+  late final AnimationController _voiceAnimationController;
 
   @override
   void initState() {
@@ -111,6 +113,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     _initSpeech();
+     _voiceAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
   }
 
   void _initSpeech() async {
@@ -123,6 +129,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _phraseTimer.cancel();
     _closeHistoryMenu(); 
     _closeConversationMenu();
+    _voiceAnimationController.dispose();
     super.dispose();
   }
   
@@ -134,7 +141,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   }
 
   void _startNewChat() {
-    // Close the drawer
     if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
       Navigator.of(context).pop();
     }
@@ -161,11 +167,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     
     setState(() {
       _currentConversation = conversation;
-      // Clear current messages instantly
       _messages.clear();
-      // Add messages from loaded conversation
       _messages.addAll(conversation.messages);
-      // We can't use AnimatedList for this, so we just rebuild the state
       _chat = _model.startChat(history: conversation.messages.where((m) => m.text.isNotEmpty).map((m) {
         return m.isUser ? Content.text(m.text) : Content.model([TextPart(m.text)]);
       }).toList());
@@ -247,7 +250,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _loadConversations();
     }
   }
-  
+
   void _handleVoiceMessage() async {
     if (!_isListening) {
       bool available = await _speechToText.initialize();
@@ -267,6 +270,12 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       setState(() => _isListening = false);
       _speechToText.stop();
     }
+  }
+  
+  void _toggleVoiceChat() {
+    setState(() {
+      _isVoiceChatActive = !_isVoiceChatActive;
+    });
   }
 
   void _toggleHistoryMenu() {
@@ -671,11 +680,56 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
+          if (_isVoiceChatActive) _buildVoiceChatOverlay(),
         ],
       ),
     );
   }
   
+   Widget _buildVoiceChatOverlay() {
+    return GestureDetector(
+      onTap: _toggleVoiceChat,
+      child: Container(
+        color: Colors.black.withOpacity(0.7),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _isListening ? () {} : _handleVoiceMessage,
+                child: AnimatedBuilder(
+                  animation: _voiceAnimationController,
+                  builder: (context, child) {
+                    final double size = _isListening ? 150.0 + _voiceAnimationController.value * 30 : 150.0;
+                    return Container(
+                      width: size,
+                      height: size,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isListening ? Colors.cyanAccent.withOpacity(0.5) : Colors.white24,
+                        border: Border.all(
+                          color: _isListening ? Colors.cyanAccent : Colors.transparent,
+                          width: 2.0,
+                        ),
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none,
+                        color: Colors.white,
+                        size: 80,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(_voiceChatStatus, style: const TextStyle(color: Colors.white54, fontSize: 18)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTextComposer() {
     bool hasText = _textController.text.isNotEmpty;
 
@@ -714,6 +768,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onSubmitted: (value) => hasText ? _handleSendMessage() : null,
               ),
             ),
+            IconButton(
+                icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: Colors.white54),
+                onPressed: _handleVoiceMessage,
+            ),
             hasText
               ? IconButton(
                   icon: const Icon(Icons.send, color: Colors.white54),
@@ -721,12 +779,8 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 )
               : IconButton(
                   icon: const Icon(Icons.graphic_eq, color: Colors.white54),
-                  onPressed: () {},
+                  onPressed: _toggleVoiceChat,
                 ),
-             IconButton(
-                icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: Colors.white54),
-                onPressed: _handleVoiceMessage,
-            ),
           ],
         ),
       ),
