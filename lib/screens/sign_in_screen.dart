@@ -23,7 +23,10 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     try {
-     final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // Sign out to clear the cached account and force account selection
+      await _googleSignIn.signOut();
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       // If the user cancels the sign-in, stop the loading indicator
       if (googleUser == null) {
@@ -31,7 +34,8 @@ class _SignInScreenState extends State<SignInScreen> {
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -39,7 +43,6 @@ class _SignInScreenState extends State<SignInScreen> {
 
       // Let the AuthWrapper handle the navigation
       await FirebaseAuth.instance.signInWithCredential(credential);
-
     } catch (e) {
       print("Something went wrong with Google Sign-In: $e");
       // Stop loading if there is an error
@@ -69,10 +72,12 @@ class _SignInScreenState extends State<SignInScreen> {
                       const SizedBox(width: 10),
                       const Text(
                         'Selene',
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 20),
-                      Image.asset('assets/images/google_logo.png', height: 24.0),
+                      Image.asset('assets/images/google_logo.png',
+                          height: 24.0),
                     ],
                   ),
                 ),
@@ -89,21 +94,23 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 40),
                 ElevatedButton.icon(
                   onPressed: _signInWithGoogle,
-                  icon: Image.asset('assets/images/google_logo.png', height: 24.0),
+                  icon: Image.asset('assets/images/google_logo.png',
+                      height: 24.0),
                   label: const Text('Sign In with Google'),
                   style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.black, backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 30, vertical: 15),
                   ),
                 ),
               ],
             ),
           ),
-          if (_isLoading)
-            const LoadingScreen(),
+          if (_isLoading) const LoadingScreen(),
         ],
       ),
     );
