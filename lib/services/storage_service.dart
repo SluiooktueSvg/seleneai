@@ -3,11 +3,15 @@ import 'package:selene/models/conversation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
-  static const _conversationsKey = 'conversations';
+  static const _conversationsKeyPrefix = 'conversations_';
 
-  Future<void> saveConversation(Conversation conversation) async {
+  String _getUserConversationsKey(String userId) {
+    return '$_conversationsKeyPrefix$userId';
+  }
+
+  Future<void> saveConversation(String userId, Conversation conversation) async {
     final prefs = await SharedPreferences.getInstance();
-    final conversations = await loadConversations();
+    final conversations = await loadConversations(userId);
     final index = conversations.indexWhere((c) => c.id == conversation.id);
 
     if (index != -1) {
@@ -17,27 +21,27 @@ class StorageService {
     }
 
     final conversationsJson = conversations.map((c) => jsonEncode(c.toJson())).toList();
-    await prefs.setStringList(_conversationsKey, conversationsJson);
+    await prefs.setStringList(_getUserConversationsKey(userId), conversationsJson);
   }
 
-  Future<List<Conversation>> loadConversations() async {
+  Future<List<Conversation>> loadConversations(String userId) async {
     final prefs = await SharedPreferences.getInstance();
-    final conversationsJson = prefs.getStringList(_conversationsKey) ?? [];
+    final conversationsJson = prefs.getStringList(_getUserConversationsKey(userId)) ?? [];
     return conversationsJson
         .map((json) => Conversation.fromJson(jsonDecode(json)))
         .toList();
   }
 
-  Future<void> deleteConversation(String conversationId) async {
+  Future<void> deleteConversation(String userId, String conversationId) async {
     final prefs = await SharedPreferences.getInstance();
-    final conversations = await loadConversations();
+    final conversations = await loadConversations(userId);
     conversations.removeWhere((c) => c.id == conversationId);
     final conversationsJson = conversations.map((c) => jsonEncode(c.toJson())).toList();
-    await prefs.setStringList(_conversationsKey, conversationsJson);
+    await prefs.setStringList(_getUserConversationsKey(userId), conversationsJson);
   }
 
-  Future<void> clearConversations() async {
+  Future<void> clearConversations(String userId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_conversationsKey);
+    await prefs.remove(_getUserConversationsKey(userId));
   }
 }
