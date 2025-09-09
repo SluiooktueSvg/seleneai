@@ -25,10 +25,10 @@ class ChatMessage {
       };
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) => ChatMessage(
-        text: json['text'],
+        text: json['text'] ?? '',
         isUser: json['isUser'],
         timestamp: DateTime.parse(json['timestamp']),
         imageUrl: json['imageUrl'],
-        conversationId: json['conversationId'],
+        conversationId: json['conversationId'] ?? '',
       );
 }
