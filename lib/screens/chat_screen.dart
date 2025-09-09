@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:selene/models/conversation.dart';
 import 'package:selene/services/firestore_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:fluttertoast/fluttertoast.dart'; 
 
 import '../models/chat_message.dart';
 import '../widgets/chat_drawer.dart';
@@ -194,6 +195,43 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       }).toList());
     });
   }
+
+  void _deleteConversation() {
+    if (_currentConversation == null) return;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Eliminar Chat'),
+          content: const Text(
+              '¿Estás seguro de que quieres eliminar la conversación actual?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                if (_currentConversation != null) {
+                  await _firestoreService.deleteConversation(
+                      user!.uid, _currentConversation!.id);
+                  await _loadConversations();
+                  Fluttertoast.showToast(msg: "Chat eliminado exitosamente", toastLength: Toast.LENGTH_SHORT, gravity: ToastGravity.BOTTOM, backgroundColor: Colors.grey[700], textColor: Colors.white, fontSize: 16.0,);
+                }
+                _startNewChat();
+              },
+              child: const Text('Eliminar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -388,6 +426,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _openConversationMenu();
     }
   }
+  
 
   void _openConversationMenu() {
     final renderBox =
@@ -453,6 +492,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                           style: TextStyle(color: Colors.redAccent)),
                       onTap: () {
                         _closeConversationMenu();
+                        _deleteConversation();
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
@@ -481,6 +521,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                     
                                     // Reload conversations from Firestore to update the list
                                     await _loadConversations();
+                                    // Mostrar Toast Notification
+                                    Fluttertoast.showToast(
+                                     msg: "Chat eliminado exitosamente", // Mensaje del Toast
+                                     toastLength: Toast.LENGTH_SHORT,    // Duración (SHORT o LONG)
+                                     gravity: ToastGravity.BOTTOM,       // Posición (TOP, CENTER, BOTTOM)
+                                     backgroundColor: Colors.grey[700],  // Color de fondo
+                                     textColor: Colors.white,            // Color del texto
+                                     fontSize: 16.0,                     // Tamaño de fuente
+                                     );
                                     }
 
                                     _startNewChat();
