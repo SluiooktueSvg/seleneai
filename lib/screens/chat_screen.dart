@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:selene/models/conversation.dart';
-import 'package:selene/services/storage_service.dart';
+import 'package:selene/services/firestore_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../models/chat_message.dart';
@@ -31,7 +31,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final user = FirebaseAuth.instance.currentUser;
   
   // State for conversations
-  final StorageService _storageService = StorageService();
+  final FirestoreService _firestoreService = FirestoreService();
   List<Conversation> _conversations = [];
   Conversation? _currentConversation;
   
@@ -146,7 +146,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.clear();
     });
     // Assuming StorageService has a clearConversations method
-    await _storageService.clearConversations(user!.uid);
+    await _firestoreService.clearUserConversations(user!.uid);
   }
 
   Future<void> _loadConversations() async {
