@@ -76,7 +76,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   // Variables para el botón "Obtener Plus"
   Color _plusButtonColor = const Color(0xFF3A416F); // Color original del botón
   late final AnimationController _plusButtonAnimationController;
-  late final Animation<Color?> _plusButtonColorAnimation;
+  late Animation<Color?> _plusButtonColorAnimation;
   Timer? _plusButtonTimer; // Temporizador para revertir el color
 
   @override
