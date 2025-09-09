@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:selene/models/conversation.dart';
 import 'package:selene/services/storage_service.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 
 import '../models/chat_message.dart';
 import '../widgets/chat_drawer.dart';
@@ -40,7 +37,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
-  File? _imageFile;
 
   late final GenerativeModel _model;
   late ChatSession _chat;
@@ -60,7 +56,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   ];
 
   final SpeechToText _speechToText = SpeechToText();
-  final FlutterTts _flutterTts = FlutterTts();
   bool _isListening = false;
 
   // For custom menus
@@ -73,8 +68,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
 
   // Voice Chat State
   bool _isVoiceChatActive = false;
-  String _voiceChatStatus = "Toca para hablar";
-  late final AnimationController _voiceAnimationController;
 
   @override
   void initState() {
@@ -118,21 +111,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     });
 
     _initSpeech();
-    _voiceAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..repeat(reverse: true);
   }
 
   void _initSpeech() async {
     await _speechToText.initialize();
-    _flutterTts.setCompletionHandler(() {
-      if (mounted) {
-        setState(() {
-           _voiceChatStatus = "Toca para hablar";
-        });
-      }
-    });
   }
 
   @override
@@ -141,7 +123,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     _phraseTimer.cancel();
     _closeHistoryMenu(); 
     _closeConversationMenu();
-    _voiceAnimationController.dispose();
     super.dispose();
   }
   
@@ -170,7 +151,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       }
       _messages.clear();
       _chat = _model.startChat();
-      _imageFile = null;
     });
   }
   
@@ -203,27 +183,15 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
-  }
-
-  Future<void> _handleSendMessage({String? text, bool isVoiceInput = false}) async {
+  Future<void> _handleSendMessage({String? text}) async {
     final messageText = text ?? _textController.text;
-    if (messageText.isEmpty && _imageFile == null) return;
+    if (messageText.isEmpty) return;
 
     _textController.clear();
-    final image = _imageFile;
-    _imageFile = null;
 
     if (_currentConversation == null) {
       final newConversationId = DateTime.now().millisecondsSinceEpoch.toString();
-      final title = messageText.isNotEmpty ? (messageText.length > 30 ? messageText.substring(0, 30) : messageText) : "Chat con Imagen";
+      final title = messageText.length > 30 ? messageText.substring(0, 30) : messageText;
       _currentConversation = Conversation(id: newConversationId, title: title, messages: []);
       _conversations.insert(0, _currentConversation!);
     }
@@ -232,7 +200,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       text: messageText,
       isUser: true,
       timestamp: DateTime.now(),
-      imageUrl: image?.path,
       conversationId: _currentConversation!.id,
     );
     
@@ -245,18 +212,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
     
     setState(() {
       _isTyping = true;
-       if(isVoiceInput) _voiceChatStatus = "Procesando...";
     });
 
     try {
-      final content = <Part>[];
-      if (image != null) {
-        final imageBytes = await image.readAsBytes();
-        content.add(DataPart('image/jpeg', imageBytes));
-      }
-      if (messageText.isNotEmpty) {
-         content.add(TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$messageText"));
-      }
+      final content = [TextPart("System instruction: Your responses must be in Spanish, regardless of the language of the prompt. \n\n$messageText")];
      
       final response = await _chat.sendMessage(Content.multi(content));
       final aiMessage = ChatMessage(
@@ -269,9 +228,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _messages.insert(0, aiMessage);
       _listKey.currentState?.insertItem(0, duration: const Duration(milliseconds: 300));
 
-      if (isVoiceInput && response.text != null) {
-        _speak(response.text!);
-      }
     } catch (e) {
       print('Error sending message: $e');
       final errorMessage = ChatMessage(
@@ -287,58 +243,29 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       await _storageService.saveConversation(_currentConversation!);
       setState(() {
         _isTyping = false;
-        _imageFile = null; 
       });
       _loadConversations();
     }
   }
-
-  void _toggleVoiceChat() {
-    setState(() {
-      _isVoiceChatActive = !_isVoiceChatActive;
-      if (_isVoiceChatActive) {
-        _startVoiceListening();
-      }
-    });
-  }
-
-  void _startVoiceListening() {
-    if (mounted && _isVoiceChatActive) {
-      setState(() {
-        _isListening = true;
-        _voiceChatStatus = "Escuchando...";
-      });
-      _speechToText.listen(
-        onResult: (result) {
-          if (result.finalResult) {
-            _handleSendMessage(text: result.recognizedWords, isVoiceInput: true);
-          }
-        },
-        listenFor: const Duration(seconds: 10),
-        onDevice: true,
-        cancelOnError: true,
-        partialResults: false,
-        localeId: 'es_ES',
-      );
-      // Automatically stop listening after a timeout
-      Timer(const Duration(seconds: 10), _stopVoiceListening);
-    }
-  }
-
-  void _stopVoiceListening() {
-    if (_isListening && mounted) {
+  
+  void _handleVoiceMessage() async {
+    if (!_isListening) {
+      bool available = await _speechToText.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speechToText.listen(
+          onResult: (result) {
+            if (result.finalResult) {
+              _handleSendMessage(text: result.recognizedWords);
+              setState(() => _isListening = false);
+              _speechToText.stop();
+            }
+          },
+        );
+      } 
+    } else {
+      setState(() => _isListening = false);
       _speechToText.stop();
-      setState(() {
-        _isListening = false;
-        _voiceChatStatus = "Toca para hablar";
-      });
-    }
-  }
-
-  void _speak(String text) async {
-    if (mounted) {
-      setState(() => _voiceChatStatus = "Hablando...");
-      await _flutterTts.speak(text);
     }
   }
 
@@ -611,7 +538,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             key: ObjectKey(message),
             message: message,
             userPhotoUrl: user?.photoURL,
-            onSpeak: (text) => _speak(text),
           ),
         ),
       ),
@@ -745,59 +671,13 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
               ),
             ],
           ),
-          if (_isVoiceChatActive) _buildVoiceChatOverlay(),
         ],
       ),
     );
   }
   
-  Widget _buildVoiceChatOverlay() {
-    return GestureDetector(
-      onTap: _toggleVoiceChat,
-      child: Container(
-        color: Colors.black.withOpacity(0.7),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _isListening ? _stopVoiceListening : _startVoiceListening,
-                child: AnimatedBuilder(
-                  animation: _voiceAnimationController,
-                  builder: (context, child) {
-                    final double size = _isListening ? 150.0 + _voiceAnimationController.value * 30 : 150.0;
-                    return Container(
-                      width: size,
-                      height: size,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isListening ? Colors.cyanAccent.withOpacity(0.5) : Colors.white24,
-                        border: Border.all(
-                          color: _isListening ? Colors.cyanAccent : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                      child: Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        color: Colors.white,
-                        size: 80,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(_voiceChatStatus, style: const TextStyle(color: Colors.white54, fontSize: 18)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildTextComposer() {
     bool hasText = _textController.text.isNotEmpty;
-    bool hasImage = _imageFile != null;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -808,10 +688,6 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
         ),
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white54),
-              onPressed: _pickImage,
-            ),
             Expanded(
               child: TextField(
                 controller: _textController,
@@ -835,18 +711,22 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                 onChanged: (text) {
                   setState(() {});
                 },
-                onSubmitted: (value) => hasText || hasImage ? _handleSendMessage() : null,
+                onSubmitted: (value) => hasText ? _handleSendMessage() : null,
               ),
             ),
-            (hasText || hasImage)
+            hasText
               ? IconButton(
                   icon: const Icon(Icons.send, color: Colors.white54),
                   onPressed: () => _handleSendMessage(),
                 )
               : IconButton(
                   icon: const Icon(Icons.graphic_eq, color: Colors.white54),
-                  onPressed: _toggleVoiceChat,
+                  onPressed: () {},
                 ),
+             IconButton(
+                icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: Colors.white54),
+                onPressed: _handleVoiceMessage,
+            ),
           ],
         ),
       ),
