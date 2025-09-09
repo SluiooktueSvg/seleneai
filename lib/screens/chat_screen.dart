@@ -653,7 +653,11 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
             _scaffoldKey.currentState?.openDrawer();
           },
         ),
-        title: Text(_currentConversation?.title ?? 'Selene'),
+        title: Text(
+        _currentConversation?.title ?? 'Selene',
+        style: const TextStyle(
+          fontSize: 5, //cambiar el tamaño de letra "se supone que el texto del appbar"
+        )),
         actions: [
           IconButton(
             key: _conversationMenuKey,
