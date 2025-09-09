@@ -468,7 +468,7 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
                                   child: const Text('Cancelar'),
                                 ),
                                 TextButton(
-                                  onPressed: () {
+                                  onPressed: () async {
                                     // Close the dialog first
                                     Navigator.of(context).pop();
 
