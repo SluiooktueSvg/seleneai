@@ -16,6 +16,8 @@ import '../widgets/typewriter_hint_text.dart';
 import 'voice_chat_screen.dart';
 import '../widgets/animated_phrase_carousel.dart';
 import '../models/search_result_item.dart'; // Importar SearchResultItem
+import '../widgets/voice_visualizer.dart';
+
 
 final GoogleSignIn _googleSignIn = GoogleSignIn();
 // Instancia de Random para generar colores aleatorios
@@ -81,6 +83,10 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   late final AnimationController _plusButtonAnimationController;
   late Animation<Color?> _plusButtonColorAnimation;
   Timer? _plusButtonTimer; // Temporizador para revertir el color
+
+  bool _isRecording = false;
+  String _recognizedText = '';
+
 
   @override
   void initState() {
@@ -369,28 +375,52 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       });
     }
   }
-
-  void _handleVoiceMessage() async {
-    if (!_isListening) {
-      bool available = await _speechToText.initialize();
-      if (available) {
-        setState(() => _isListening = true);
-        _speechToText.listen(
-          onResult: (result) {
-            if (result.finalResult) {
-              _handleSendMessage(text: result.recognizedWords);
-              setState(() => _isListening = false);
-              _speechToText.stop();
-            }
-          },
-        );
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speechToText.stop();
+  
+  //change
+  void _toggleRecording() async {
+  if (!_isRecording) {
+    bool available = await _speechToText.initialize();
+    if (available) {
+      setState(() {
+        _isRecording = true;
+        _recognizedText = 'Escuchando...';
+      });
+      _speechToText.listen(
+        onResult: (result) {
+          setState(() {
+            _recognizedText = result.recognizedWords;
+          });
+          if (result.finalResult) {
+            setState(() {
+              _isRecording = true;
+            });
+          }
+        },
+      );
     }
   }
+}
 
+void _cancelRecording() {
+  _speechToText.stop();
+  setState(() {
+    _isRecording = false;
+    _recognizedText = '';
+  });
+}
+
+void _sendRecordedMessage() {
+  if (_recognizedText.isNotEmpty && _recognizedText != 'Escuchando...') {
+    _handleSendMessage(text: _recognizedText);
+  }
+  _speechToText.stop();
+  setState(() {
+    _isRecording = false;
+    _recognizedText = '';
+  });
+}
+
+  //change
   void _toggleVoiceChat() {
     setState(() {
       _isVoiceChatActive = !_isVoiceChatActive;
@@ -479,6 +509,28 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       _openConversationMenu();
     }
   }
+
+  void _handleOverlayVoice() async {
+  if (!_isListening) {
+    bool available = await _speechToText.initialize();
+    if (available) {
+      setState(() => _isListening = true);
+      _speechToText.listen(
+        onResult: (result) {
+          if (result.finalResult) {
+            _handleSendMessage(text: result.recognizedWords);
+            setState(() => _isListening = false);
+            _speechToText.stop();
+          }
+        },
+      );
+    }
+  } else {
+    setState(() => _isListening = false);
+    _speechToText.stop();
+  }
+}
+
 
   void _openConversationMenu() {
     final renderBox =
@@ -659,6 +711,34 @@ class _ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
       ),
     );
   }
+
+  Widget _buildVoiceMessageComposer() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    child: Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(30.0),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white54),
+            onPressed: _cancelRecording,
+          ),
+          const Expanded(
+            child: VoiceVisualizer(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send, color: Colors.white54),
+            onPressed: _sendRecordedMessage,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 
   PreferredSizeWidget _buildInitialAppBar() {
     return AppBar(
@@ -863,112 +943,118 @@ void _handlePlusButtonPress() {
     );
   }
 
-  Widget _buildVoiceChatOverlay() {
-    return GestureDetector(
-      onTap: _toggleVoiceChat,
-      child: Container(
-        color: Colors.black.withOpacity(0.7),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GestureDetector(
-                onTap: _isListening ? () {} : _handleVoiceMessage,
-                child: AnimatedBuilder(
-                  animation: _voiceAnimationController,
-                  builder: (context, child) {
-                    final double size = _isListening
-                        ? 150.0 + _voiceAnimationController.value * 30
-                        : 150.0;
-                    return Container(
-                      width: size,
-                      height: size,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _isListening
-                            ? Colors.cyanAccent.withOpacity(0.5)
-                            : Colors.white24,
-                        border: Border.all(
-                          color: _isListening
-                              ? Colors.cyanAccent
-                              : Colors.transparent,
-                          width: 2.0,
-                        ),
-                      ),
-                      child: Icon(
-                        _isListening ? Icons.mic : Icons.mic_none,
-                        color: Colors.white,
-                        size: 80,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(_voiceChatStatus,
-                  style: const TextStyle(color: Colors.white54, fontSize: 18)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextComposer() {
-    bool hasText = _textController.text.isNotEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(30.0),
-        ),
-        child: Row(
+Widget _buildVoiceChatOverlay() {
+  return GestureDetector(
+    onTap: _toggleVoiceChat,
+    child: Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Expanded(
-              child: TextField(
-                controller: _textController,
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  hintText: null,
-                  hintStyle: const TextStyle(color: Colors.white54),
-                  border: InputBorder.none,
-                  hint: _textController.text.isEmpty
-                      ? const TypewriterHintText(
-                          phrases: [
-                            '¿Cuál es el sentido de la vida?',
-                            '¿Qué es un agujero negro?',
-                            'Escribe un poema sobre el amor.',
-                            '¿Cuál es la capital de Mongolia?',
-                          ],
-                        )
-                      : null,
-                ),
-                onChanged: (text) {
-                  setState(() {});
+            GestureDetector(
+              //  ▼▼▼ ESTA ES LA LÍNEA QUE DEBES CAMBIAR ▼▼▼
+              onTap: _handleOverlayVoice,
+              child: AnimatedBuilder(
+                animation: _voiceAnimationController,
+                builder: (context, child) {
+                  final double size = _isListening
+                      ? 150.0 + _voiceAnimationController.value * 30
+                      : 150.0;
+                  return Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isListening
+                          ? Colors.cyanAccent.withOpacity(0.5)
+                          : Colors.white24,
+                      border: Border.all(
+                        color: _isListening
+                            ? Colors.cyanAccent
+                            : Colors.transparent,
+                        width: 2.0,
+                      ),
+                    ),
+                    child: Icon(
+                      _isListening ? Icons.mic : Icons.mic_none,
+                      color: Colors.white,
+                      size: 80,
+                    ),
+                  );
                 },
-                onSubmitted: (value) => hasText ? _handleSendMessage() : null,
               ),
             ),
-            IconButton(
-              icon: Icon(_isListening ? Icons.mic_off : Icons.mic,
-                  color: Colors.white54),
-              onPressed: _handleVoiceMessage,
-            ),
-            hasText
-                ? IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white54),
-                    onPressed: () => _handleSendMessage(),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.graphic_eq, color: Colors.white54),
-                    onPressed: _toggleVoiceChat,
-                  ),
+            const SizedBox(height: 20),
+            Text(_voiceChatStatus,
+                style: const TextStyle(color: Colors.white54, fontSize: 18)),
           ],
         ),
       ),
-    );
+    ),
+  );
+}
+
+
+Widget _buildTextComposer() {
+  if (_isRecording) {
+    return _buildVoiceMessageComposer();
   }
+
+  bool hasText = _textController.text.isNotEmpty;
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+    child: Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(30.0),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _textController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20.0),
+                hintText: null,
+                hintStyle: const TextStyle(color: Colors.white54),
+                border: InputBorder.none,
+                hint: _textController.text.isEmpty
+                    ? const TypewriterHintText(
+                        phrases: [
+                          '¿Cuál es el sentido de la vida?',
+                          '¿Qué es un agujero negro?',
+                          'Escribe un poema sobre el amor.',
+                          '¿Cuál es la capital de Mongolia?',
+                        ],
+                      )
+                    : null,
+              ),
+              onChanged: (text) {
+                setState(() {});
+              },
+              onSubmitted: (value) => hasText ? _handleSendMessage() : null,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.mic, color: Colors.white54),
+            onPressed: _toggleRecording,
+          ),
+          hasText
+              ? IconButton(
+                  icon: const Icon(Icons.send, color: Colors.white54),
+                  onPressed: () => _handleSendMessage(),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.graphic_eq, color: Colors.white54),
+                  onPressed: _toggleVoiceChat,
+                ),
+        ],
+      ),
+    ),
+  );
+}
+
 }
