@@ -1,6 +1,6 @@
 # seleneai
 
-A new Flutter project.
+Sluiooktue Inc, Selene Ai (beta) test
 
 ## Getting Started
 
